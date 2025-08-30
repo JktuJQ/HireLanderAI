@@ -11,7 +11,7 @@ class Evaluator:
     It then grades person based on their compliance with the requirements.
     """
 
-    def __init__(self, job_requirements: list[str], pdf_path=None, pretrained: bool = True):
+    def __init__(self, job_requirements: list[str]=None, pdf_path=None, pretrained: bool = True):
         self.job_requirements = job_requirements
         self.pdf_path = pdf_path
         self.model = None  # https://github.com/shcherbak-ai/contextgem seems interesting for preprocessing
@@ -95,7 +95,7 @@ class Evaluator:
 
             print("Текст и таблицы сохранены в extracted_text.txt")
         except:
-            print('Не удалось обработать файл')
+            raise 'Не удалось обработать файл'
 
     def grade(self, conversation: str = None, cv_file: str = None) -> dict[str, int]:
         """
@@ -114,7 +114,69 @@ class Evaluator:
 
         return {requirement: 0 for requirement in self.job_requirements}
 
+class JobPosition:
+    """
+    Model that can evaluate job position and requirenments from a PDF-file
+    that has a description of a position
+    """
+
+    def __init__(self, position: str = None, requirements: list[str] = None, pdf_path: str = None):
+        self.position = position
+        self.requirements = requirements
+        self.pdf_path = pdf_path
+
+    def extract_position(self) -> str:
+        """
+        Gets a field value from a PDF-file
+        """
+        try:
+            if self.position is not None:
+                return self.position
+
+            with pdfplumber.open(self.pdf_path) as pdf:
+                text = ""
+                for page in pdf.pages:
+                    text += page.extract_text() + "\n"
+
+            # Разобьём по строкам и ищем нужное поле
+            for line in text.splitlines():
+                if line.startswith("Название"):
+                    # убираем само название поля
+                    return line.replace("Название", "").strip()
+
+            return "Не получилось найти название вакансии"
+        except:
+            raise "Не удалось обработать файл"
+
+    def extract_requirements(self) -> list[str]:
+        """
+        Gets job requirements from a PDF-file
+        """
+        doc = fitz.open(self.pdf_path)
+        requirements_text = ""
+        capture = False
+
+        for page in doc:
+            text = page.get_text("text")
+            lines = text.splitlines()
+
+            for line in lines:
+                if "Требования (для" in line:  # начало нужного блока
+                    capture = True
+                    continue
+                if capture:
+                    if line.strip().startswith(
+                            "Уровень образования"):  # конец блока
+                        capture = False
+                        break
+                    requirements_text += " " + line.strip()
+
+        return requirements_text[13:].split(';')
+
 
 if __name__ == '__main__':
     ev = Evaluator(job_requirements=[''], pdf_path='резюме.pdf')
     ev.process_pdf()
+    jp = JobPosition(pdf_path='Описание бизнес аналитик.pdf')
+    print(jp.extract_position())
+    print(jp.extract_requirements())
