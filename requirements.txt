@@ -2,3 +2,6 @@ dotenv~=0.9.9
 python-dotenv~=1.1.1
 Flask~=3.1.2
 pillow~=11.3.0
+PyMuPDF
+pdfplumber
+pandas

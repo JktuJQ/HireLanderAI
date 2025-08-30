@@ -1,3 +1,7 @@
+import fitz
+import pdfplumber
+import pandas as pd
+
 class Evaluator:
     """
     Model that can evaluate person's compliance with the vacancy based on their CV or their conversation.
@@ -7,10 +11,91 @@ class Evaluator:
     It then grades person based on their compliance with the requirements.
     """
 
-    def __init__(self, job_requirements: list[str], pretrained: bool = True):
+    def __init__(self, job_requirements: list[str], pdf_path=None, pretrained: bool = True):
         self.job_requirements = job_requirements
-
+        self.pdf_path = pdf_path
         self.model = None  # https://github.com/shcherbak-ai/contextgem seems interesting for preprocessing
+
+    def extract_text_from_pdf(self):
+        """First of the three functions that get the text from the resume.
+        Extracts all the text via PyMuPDF library"""
+        doc = fitz.open(self.pdf_path)
+        full_text = ""
+
+        for page_num in range(len(doc)):
+            page = doc.load_page(page_num)
+            # Получаем размеры страницы
+            width = page.rect.width
+
+            # Определяем среднюю точку для разделения колонок
+            mid_x = width / 2
+
+            # Извлекаем текстовые блоки
+            blocks = page.get_text("dict")["blocks"]
+            left_column = []
+            right_column = []
+
+            for block in blocks:
+                if "lines" in block:  # Текстовый блок
+                    x0 = block["bbox"][0]
+                    text = ""
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            text += span["text"] + " "
+
+                    # Распределяем по колонкам
+                    if x0 < mid_x:
+                        left_column.append(
+                            (block["bbox"][1], text))  # (y-coord, text)
+                    else:
+                        right_column.append((block["bbox"][1], text))
+
+            # Сортируем блоки по вертикали
+            left_column.sort(key=lambda x: x[0])
+            right_column.sort(key=lambda x: x[0])
+
+            # Формируем текст для страницы
+            page_text = ""
+            for y, text in left_column:
+                page_text += text + "\n"
+            for y, text in right_column:
+                page_text += text + "\n"
+
+            full_text += f"--- Страница {page_num + 1} ---\n{page_text}\n"
+
+        doc.close()
+        return full_text
+
+    def extract_tables_from_pdf(self):
+        """Second of the three functions that get the text from the resume.
+        Extracts all the tables"""
+        tables_text = ""
+        with pdfplumber.open(self.pdf_path) as pdf:
+            for page_num, page in enumerate(pdf.pages):
+                tables = page.extract_tables()
+                if tables:
+                    tables_text += f"\n--- Таблицы на странице {page_num + 1} ---\n"
+                    for i, table in enumerate(tables):
+                        df = pd.DataFrame(table)
+                        tables_text += f"Таблица {i + 1}:\n"
+                        tables_text += df.to_string(index=False,
+                                                    header=False) + "\n\n"
+        return tables_text
+
+    def process_pdf(self):
+        """Main function, writes text from pdf resume to a extracted_text.txt file
+        usage: Evaluator.process_pdf()"""
+        try:
+            text = self.extract_text_from_pdf()
+            tables = self.extract_tables_from_pdf()
+
+            with open("extracted_text.txt", "w", encoding="utf-8") as f:
+                f.write(text)
+                f.write(tables)
+
+            print("Текст и таблицы сохранены в extracted_text.txt")
+        except:
+            print('Не удалось обработать файл')
 
     def grade(self, conversation: str = None, cv_file: str = None) -> dict[str, int]:
         """
@@ -28,3 +113,8 @@ class Evaluator:
         """
 
         return {requirement: 0 for requirement in self.job_requirements}
+
+
+if __name__ == '__main__':
+    ev = Evaluator(job_requirements=[''], pdf_path='резюме.pdf')
+    ev.process_pdf()
