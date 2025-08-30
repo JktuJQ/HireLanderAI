@@ -1,6 +1,9 @@
-import fitz
-import pdfplumber
-import pandas as pd
+from globals import *
+
+import contextgem
+
+import pymupdf
+
 
 class Evaluator:
     """
@@ -11,93 +14,101 @@ class Evaluator:
     It then grades person based on their compliance with the requirements.
     """
 
-    def __init__(self, job_requirements: list[str]=None, pdf_path=None, pretrained: bool = True):
+    def __init__(self, job_requirements: list[str]):
         self.job_requirements = job_requirements
-        self.pdf_path = pdf_path
-        self.model = None  # https://github.com/shcherbak-ai/contextgem seems interesting for preprocessing
 
-    def extract_text_from_pdf(self):
-        """First of the three functions that get the text from the resume.
-        Extracts all the text via PyMuPDF library"""
-        doc = fitz.open(self.pdf_path)
-        full_text = ""
+        self.extractor_model = contextgem.DocumentLLM(
+            model="openai/gpt-4o-mini",
+            api_key=SECRETS["OPENAI_API_KEY"],
+            # fetch free key for 5 dollars https://benjamincrozat.com/gpt-4o-mini#introduction-to-gpt-4o-mini
+        )
 
-        for page_num in range(len(doc)):
-            page = doc.load_page(page_num)
-            # Получаем размеры страницы
-            width = page.rect.width
+    @staticmethod
+    def __pdf_to_text(pdf_file: str) -> str:
+        """
+        Extracts all text from PDF file.
 
-            # Определяем среднюю точку для разделения колонок
-            mid_x = width / 2
+        :param pdf_file: Name of PDF file
 
-            # Извлекаем текстовые блоки
-            blocks = page.get_text("dict")["blocks"]
-            left_column = []
-            right_column = []
+        :return: Extracted text
+        """
 
-            for block in blocks:
-                if "lines" in block:  # Текстовый блок
-                    x0 = block["bbox"][0]
-                    text = ""
-                    for line in block["lines"]:
-                        for span in line["spans"]:
-                            text += span["text"] + " "
+        text = []
+        with pymupdf.open(pdf_file) as f:
+            text.append(f"--- Название файла: {pdf_file[:-4]} ---")
+            for num, page in enumerate(f.pages()):
+                text.append(f"--- Страница №{num + 1} ---")
+                text.append(page.getText())
+        return "\n".join(text)
 
-                    # Распределяем по колонкам
-                    if x0 < mid_x:
-                        left_column.append(
-                            (block["bbox"][1], text))  # (y-coord, text)
-                    else:
-                        right_column.append((block["bbox"][1], text))
+    @staticmethod
+    def __file_to_document(filename: str) -> contextgem.Document:
+        """
+        Converts file into structured document.
 
-            # Сортируем блоки по вертикали
-            left_column.sort(key=lambda x: x[0])
-            right_column.sort(key=lambda x: x[0])
+        :param filename: Name of the file (only PDF and DOCX are supported)
+        :return: Structured document with contents of given file
+        """
 
-            # Формируем текст для страницы
-            page_text = ""
-            for y, text in left_column:
-                page_text += text + "\n"
-            for y, text in right_column:
-                page_text += text + "\n"
+        extension = filename.split(".")[-1]
+        if extension == "pdf":
+            document = contextgem.Document(raw_text=Evaluator.__pdf_to_text(filename))
+        elif extension == "docx":
+            document = contextgem.DocxConverter().convert(filename)
+        else:
+            raise Exception("Only PDF or DOCX files are allowed")
 
-            full_text += f"--- Страница {page_num + 1} ---\n{page_text}\n"
+        return document
 
-        doc.close()
-        return full_text
+    @classmethod
+    def from_vacancy_file(cls, filename: str) -> 'Evaluator':
+        """
+        Extracts job requirements from file.
 
-    def extract_tables_from_pdf(self):
-        """Second of the three functions that get the text from the resume.
-        Extracts all the tables"""
-        tables_text = ""
-        with pdfplumber.open(self.pdf_path) as pdf:
-            for page_num, page in enumerate(pdf.pages):
-                tables = page.extract_tables()
-                if tables:
-                    tables_text += f"\n--- Таблицы на странице {page_num + 1} ---\n"
-                    for i, table in enumerate(tables):
-                        df = pd.DataFrame(table)
-                        tables_text += f"Таблица {i + 1}:\n"
-                        tables_text += df.to_string(index=False,
-                                                    header=False) + "\n\n"
-        return tables_text
+        :param filename: Name of file (PDF and DOCX are supported)
 
-    def process_pdf(self):
-        """Main function, writes text from pdf resume to a extracted_text.txt file
-        usage: Evaluator.process_pdf()"""
-        try:
-            text = self.extract_text_from_pdf()
-            tables = self.extract_tables_from_pdf()
+        :return: List of job requirements (first element of the list will contain vacation name)
+        """
 
-            with open("extracted_text.txt", "w", encoding="utf-8") as f:
-                f.write(text)
-                f.write(tables)
+        evaluator = cls([])
 
-            print("Текст и таблицы сохранены в extracted_text.txt")
-        except:
-            raise 'Не удалось обработать файл'
+        document = Evaluator.__file_to_document(filename)
+        document.add_concepts([
+            contextgem.StringConcept(
+                name="Job name",
+                description="Name of the vacancy's job",
+                reference_depth="sentences"
+            )
+        ])
+        document.add_aspect([
+            contextgem.Aspect(
+                name="Job requirements",
+                description="Sections or sentences describing job requirements (what is expected from job applicant)",
+                reference_depth="sentences",
+                add_justifications=True,
+                justification_depth="balanced",
+                # TODO: This is aspect because it could benefit from the hierarchy of concepts
+                #  (extraction of required level of education, required skills, etc)
+                #  https://contextgem.dev/aspects/aspects.html
+                #  Need to do some testing
+            )
+        ])
 
-    def grade(self, conversation: str = None, cv_file: str = None) -> dict[str, int]:
+        processed_document = evaluator.extractor_model.extract_all(document)
+        evaluator.job_requirements.append(processed_document.concepts[0].extracted_items[0].value)
+        for job_requirement in processed_document.aspects[0].extracted_items:
+            job_requirement_text = [
+                f"{job_requirement.value}",
+                f"Причины: {job_requirement.justification}",
+                "\n",
+                "Ссылки:"
+            ]
+            for sentence in job_requirement.reference_sentences:
+                job_requirement_text.append(f"* {sentence.raw_text}")
+            evaluator.job_requirements.append("\n".join(job_requirement_text))
+        return evaluator
+
+    def grade(self, cv_file: str = None, conversation: str = None) -> dict[str, (int, str)]:
         """
         Grades person based on job requirements.
 
@@ -106,77 +117,45 @@ class Evaluator:
         Because of that, this function could grade only the conversation or only the CV of a person,
         or both simultaneously.
 
+        :param cv_file: Filename of the CV file (only PDF and DOCX are supported)
         :param conversation: Conversation between interviewer/interviewee
-        :param cv_file: Filename of the CV file
 
-        :returns: Dictionary with grades for compliance with each requirement
+        :return: Dictionary with grades and justifications for compliance with each requirement
         """
 
-        return {requirement: 0 for requirement in self.job_requirements}
+        full_document = [None, None]
+        if cv_file is not None:
+            full_document[0] = "Резюме:\n" + Evaluator.__file_to_document(cv_file).raw_text
+        if conversation is not None:
+            full_document[1] = "Записанное интервью\n" + conversation
+        full_document = contextgem.Document(raw_text="\n\n".join(full_document))
 
-class JobPosition:
-    """
-    Model that can evaluate job position and requirenments from a PDF-file
-    that has a description of a position
-    """
+        job_requirements_text = []
+        for i, job_requirement in enumerate(self.job_requirements):
+            job_requirements_text.append(f"Requirement №{i + 1}:" + job_requirement)
+        job_requirements_text = "\n".join(job_requirements_text)
 
-    def __init__(self, position: str = None, requirements: list[str] = None, pdf_path: str = None):
-        self.position = position
-        self.requirements = requirements
-        self.pdf_path = pdf_path
+        full_document.add_concept([
+            contextgem.RatingConcept(
+                name="Job applicant rating",
+                description=(
+                    "Evaluate job applicant using his CV and interview.\n"
+                    f"You need to find scores and justifications for each job requirement, listed below:\n"
+                    f"{job_requirements_text}"
+                ),
+                rating_scale=(1, 100),
+                add_justifications=True,
+                justification_depth="balanced",
+                justification_max_sents=5,
+            )
+        ])
 
-    def extract_position(self) -> str:
-        """
-        Gets a field value from a PDF-file
-        """
-        try:
-            if self.position is not None:
-                return self.position
-
-            with pdfplumber.open(self.pdf_path) as pdf:
-                text = ""
-                for page in pdf.pages:
-                    text += page.extract_text() + "\n"
-
-            # Разобьём по строкам и ищем нужное поле
-            for line in text.splitlines():
-                if line.startswith("Название"):
-                    # убираем само название поля
-                    return line.replace("Название", "").strip()
-
-            return "Не получилось найти название вакансии"
-        except:
-            raise "Не удалось обработать файл"
-
-    def extract_requirements(self) -> list[str]:
-        """
-        Gets job requirements from a PDF-file
-        """
-        doc = fitz.open(self.pdf_path)
-        requirements_text = ""
-        capture = False
-
-        for page in doc:
-            text = page.get_text("text")
-            lines = text.splitlines()
-
-            for line in lines:
-                if "Требования (для" in line:  # начало нужного блока
-                    capture = True
-                    continue
-                if capture:
-                    if line.strip().startswith(
-                            "Уровень образования"):  # конец блока
-                        capture = False
-                        break
-                    requirements_text += " " + line.strip()
-
-        return requirements_text[13:].split(';')
+        evaluation = {}
+        grades = self.extractor_model.extract_concepts_from_document(full_document)[0]
+        for job_requirement, grade in zip(self.job_requirements, grades.extracted_items):
+            evaluation[job_requirement] = (grade.value, grade.justification)
+        return evaluation
 
 
 if __name__ == '__main__':
-    ev = Evaluator(job_requirements=[''], pdf_path='резюме.pdf')
-    ev.process_pdf()
-    jp = JobPosition(pdf_path='Описание бизнес аналитик.pdf')
-    print(jp.extract_position())
-    print(jp.extract_requirements())
+    pass
