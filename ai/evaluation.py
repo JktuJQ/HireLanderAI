@@ -87,10 +87,33 @@ class Evaluator:
                 reference_depth="sentences",
                 add_justifications=True,
                 justification_depth="balanced",
-                # TODO: This is aspect because it could benefit from the hierarchy of concepts
-                #  (extraction of required level of education, required skills, etc)
-                #  https://contextgem.dev/aspects/aspects.html
-                #  Need to do some testing
+                # TODO: test this stuff
+                concepts=[
+                    contextgem.StringConcept(
+                        name="Education",
+                        description="Presence or absence of a specialized education, any information about it: whether it has to be higher or not, description, specialization",
+                    ),
+                    contextgem.StringConcept(
+                        name="Stack",
+                        description="A full list of programs, programming languages or any other technologies that are required for a job",
+                    ),
+                    contextgem.StringConcept(
+                        name="Skills",
+                        description="Something that can't be connected to a stack aspect. Necessary skills or abilities to make a job done",
+                    ),
+                    contextgem.StringConcept(
+                        name="Experience",
+                        description="Anything related to needed job experience: years, required knowledge and skills",
+                    ),
+                    contextgem.StringConcept(
+                        name="Tasks",
+                        description="What tasks an employee will need to do to successfully do their job",
+                    ),
+                    contextgem.StringConcept(
+                        name="Advantages",
+                        description="Anything that can increase the odds of an employee, but not necessarily required",
+                    ),
+                ]
             )
         ])
 
@@ -155,7 +178,6 @@ class Evaluator:
         for job_requirement, grade in zip(self.job_requirements, grades.extracted_items):
             evaluation[job_requirement] = (grade.value, grade.justification)
         return evaluation
-
 
 if __name__ == '__main__':
     pass
