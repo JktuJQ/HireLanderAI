@@ -18,7 +18,7 @@ class Evaluator:
         self.job_requirements = job_requirements
 
         self.extractor_model = contextgem.DocumentLLM(
-            model="openai/gpt-4o-mini",
+            model="gemini/gemini-2.5-flash-lite",
             api_key=SECRETS["OPENAI_API_KEY"],
             # fetch free key for 5 dollars https://benjamincrozat.com/gpt-4o-mini#introduction-to-gpt-4o-mini
         )
@@ -74,13 +74,16 @@ class Evaluator:
 
         document = Evaluator.__file_to_document(filename)
         document.add_concepts([
-            contextgem.StringConcept(
-                name="Job name",
-                description="Name of the vacancy's job",
-                reference_depth="sentences"
+            contextgem.JsonObjectConcept(
+                name="Vacancy name",
+                description="Name of the vacancy's job, can be found in the fields of name, title, vacancy, specialty, and specialist",
+                structure = {
+                    "name" : str,
+                },
+                reference_depth="sentences",
             )
         ])
-        document.add_aspect([
+        document.add_aspects([
             contextgem.Aspect(
                 name="Job requirements",
                 description="Sections or sentences describing job requirements (what is expected from job applicant)",
@@ -95,13 +98,13 @@ class Evaluator:
         ])
 
         processed_document = evaluator.extractor_model.extract_all(document)
-        evaluator.job_requirements.append(processed_document.concepts[0].extracted_items[0].value)
+        evaluator.job_requirements.append(str(processed_document.concepts[0].extracted_items[0].value))
         for job_requirement in processed_document.aspects[0].extracted_items:
             job_requirement_text = [
                 f"{job_requirement.value}",
                 f"Причины: {job_requirement.justification}",
-                "\n",
                 "Ссылки:"
+                 "\n",
             ]
             for sentence in job_requirement.reference_sentences:
                 job_requirement_text.append(f"* {sentence.raw_text}")
@@ -123,7 +126,7 @@ class Evaluator:
         :return: Dictionary with grades and justifications for compliance with each requirement
         """
 
-        full_document = [None, None]
+        full_document = ["", ""]
         if cv_file is not None:
             full_document[0] = "Резюме:\n" + Evaluator.__file_to_document(cv_file).raw_text
         if conversation is not None:
@@ -135,7 +138,7 @@ class Evaluator:
             job_requirements_text.append(f"Requirement №{i + 1}:" + job_requirement)
         job_requirements_text = "\n".join(job_requirements_text)
 
-        full_document.add_concept([
+        full_document.add_concepts([
             contextgem.RatingConcept(
                 name="Job applicant rating",
                 description=(
