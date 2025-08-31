@@ -126,8 +126,8 @@ class Evaluator:
             job_requirement_text = [
                 f"{job_requirement.value}",
                 f"Причины: {job_requirement.justification}",
-                "Ссылки:"
-                 "\n",
+                "Ссылки:",
+                 "\n"
             ]
             for sentence in job_requirement.reference_sentences:
                 job_requirement_text.append(f"* {sentence.raw_text}")
@@ -158,6 +158,7 @@ class Evaluator:
 
         job_requirements_text = []
         for i, job_requirement in enumerate(self.job_requirements):
+            print(job_requirement)
             job_requirements_text.append(f"Requirement №{i + 1}:" + job_requirement)
         job_requirements_text = "\n".join(job_requirements_text)
 
