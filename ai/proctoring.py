@@ -13,7 +13,7 @@ class Proctoring:
         """
         Prints if a person is cheating
         """
-        results = self.model(self.path, conf=0.1)
+        results = self.model(self.path, conf=0.1, verbose=False)
         phone_detected = False
         people_count = 0
         flag = 0
