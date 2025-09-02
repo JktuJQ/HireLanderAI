@@ -2,7 +2,8 @@ from ultralytics import YOLO
 
 class Proctoring:
     """
-    Checks if a person uses mobile phone or is not in the frame
+    Checks if a person uses mobile phone, not in the frame
+    or there are more than one people
     """
     def __init__(self, path):
         self.model = YOLO('yolov8x.pt')
@@ -13,8 +14,9 @@ class Proctoring:
         Prints if a person is cheating
         """
         results = self.model(self.path, conf=0.1)
-        person_detected = False
         phone_detected = False
+        people_count = 0
+        flag = 0
 
         for result in results:
             for box in result.boxes:
@@ -22,19 +24,24 @@ class Proctoring:
                 label = result.names[cls]
 
                 if label == 'person':
-                    person_detected = True
-                elif label == 'cell phone':
+                    people_count += 1
+                if label == 'cell phone':
                     phone_detected = True
 
-        if not person_detected:
+        if people_count == 0:
+            flag = 1
             print("Нет человека на изображении!")
-        if person_detected and phone_detected:
+        if phone_detected:
+            flag = 1
             print("Телефон в руках обнаружен!")
-        else:
+        if people_count > 1:
+            flag = 1
+            print("Много людей в кадре!")
+        if flag == 0:
             print("Всё в порядке.")
 
 if __name__ == "__main__":
     # testing
-    # pr = Proctoring("fjsdkljflksd.png")
+    # pr = Proctoring("two_ppl_w_phones.png")
     # pr.is_cheating()
     pass
