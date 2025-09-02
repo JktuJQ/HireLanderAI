@@ -48,9 +48,9 @@ class WebRTCClient:
                     await self.frame_queue.put((peer_id, img))
                     
                     # Optional: Display the frame (for debugging)
-                    cv2.imshow(f"Video from {peer_id}", img)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
+                    # cv2.imshow(f"Video from {peer_id}", img)
+                    # if cv2.waitKey(1) & 0xFF == ord('q'):
+                    #    break
                         
                 except Exception as e:
                     print(f"Error receiving frame: {e}")
@@ -249,3 +249,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+
