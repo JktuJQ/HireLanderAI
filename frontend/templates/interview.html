@@ -5,5 +5,18 @@
 {% endblock %}
 
 {% block content %}
+<div class="header">
+    <h1>Live Coding Session</h1>
+</div>
+<div class="editor-container">
+    <textarea id="code-editor" placeholder="Start typing your code here..."></textarea>
+</div>
+<div class="status-bar" id="status">
+    Connected: 1
+</div>
+{% endblock %}
 
+{% block js %}
+<script src="{{ url_for('static', filename='js/interview.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha512-v8ng/uGxkge3d1IJuEo6dJP8JViyvms0cly9pnbfRxT6/31c3dRWxIiwGnMSWwZjHKOuY3EVmijs7k1jz/9bLA==" crossorigin="anonymous"></script>
 {% endblock %}
