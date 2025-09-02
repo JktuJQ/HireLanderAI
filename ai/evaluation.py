@@ -18,9 +18,8 @@ class Evaluator:
         self.job_requirements = job_requirements
 
         self.extractor_model = contextgem.DocumentLLM(
-            model="gemini/gemini-2.5-flash-lite",
-            api_key=SECRETS["OPENAI_API_KEY"],
-            # fetch free key for 5 dollars https://benjamincrozat.com/gpt-4o-mini#introduction-to-gpt-4o-mini
+            model="mistral/codestral-2508",
+            api_key=SECRETS["OPENAI_API_KEY"]
         )
 
     @staticmethod
@@ -73,64 +72,57 @@ class Evaluator:
         evaluator = cls([])
 
         document = Evaluator.__file_to_document(filename)
-        document.add_concepts([
-            contextgem.JsonObjectConcept(
-                name="Vacancy name",
-                description="Name of the vacancy's job, can be found in the fields of name, title, vacancy, specialty, and specialist",
-                structure = {
-                    "name" : str,
-                },
-                reference_depth="sentences",
-            )
-        ])
         document.add_aspects([
-            contextgem.Aspect(
-                name="Job requirements",
-                description="Sections or sentences describing job requirements (what is expected from job applicant)",
-                reference_depth="sentences",
-                add_justifications=True,
-                justification_depth="balanced",
-                # TODO: test this stuff
-                concepts=[
-                    contextgem.StringConcept(
-                        name="Education",
-                        description="Presence or absence of a specialized education, any information about it: whether it has to be higher or not, description, specialization",
-                    ),
-                    contextgem.StringConcept(
-                        name="Stack",
-                        description="A full list of programs, programming languages or any other technologies that are required for a job",
-                    ),
-                    contextgem.StringConcept(
-                        name="Skills",
-                        description="Something that can't be connected to a stack aspect. Necessary skills or abilities to make a job done",
-                    ),
-                    contextgem.StringConcept(
-                        name="Experience",
-                        description="Anything related to needed job experience: years, required knowledge and skills",
-                    ),
-                    contextgem.StringConcept(
-                        name="Tasks",
-                        description="What tasks an employee will need to do to successfully do their job",
-                    ),
-                    contextgem.StringConcept(
-                        name="Advantages",
-                        description="Anything that can increase the odds of an employee, but not necessarily required",
-                    ),
-                ]
-            )
-        ])
+        contextgem.Aspect(
+            name="Vacancy Title",
+            description="Extract ONLY the job title/position name. Look for: " \
+            "2) Bold headers indicating position, " \
+            "3) Main job title (not company name). " \
+            "Return only the position name, nothing else. ",
+            reference_depth="sentences",
+            add_justifications=False,
+        ),
+        
+        contextgem.Aspect(
+            name="Job Requirements Detail",
+            description="All specific requirements for the candidate. "
+                       "Focus on: education level, technical skills, experience, responsibilities.",
+            reference_depth="sentences",
+            add_justifications=True,
+            justification_depth="balanced",
+            concepts=[
+                contextgem.StringConcept(
+                    name="Education Level",
+                    description="Required education: высшее, среднее специальное, среднее профессиональное, etc."
+                ),
+                contextgem.StringConcept(
+                    name="Technical Stack",
+                    description="Specific technologies, programming languages, software, equipment mentioned. "
+                               "Include: servers, network equipment, programming languages, databases, OS."
+                ),
+                contextgem.StringConcept(
+                    name="Core Responsibilities", 
+                    description="Main job duties and tasks the employee must perform."
+                ),
+                contextgem.StringConcept(
+                    name="Required Skills",
+                    description="Soft skills and general abilities: communication, teamwork, analytical thinking, etc."
+                )
+            ]
+        )
+    ])
 
-        processed_document = evaluator.extractor_model.extract_all(document)
-        evaluator.job_requirements.append(str(processed_document.concepts[0].extracted_items[0].value))
-        for job_requirement in processed_document.aspects[0].extracted_items:
+
+        processed_document = evaluator.extractor_model.extract_all(document, max_items_per_call = 1)
+        evaluator.job_requirements.append(str(processed_document.aspects[0].extracted_items[0].value))
+        for job_requirement in processed_document.aspects[1].extracted_items:
             job_requirement_text = [
                 f"{job_requirement.value}",
                 f"Причины: {job_requirement.justification}",
-                "Ссылки:",
-                 "\n"
+                "Ссылки:"
             ]
             for sentence in job_requirement.reference_sentences:
-                job_requirement_text.append(f"* {sentence.raw_text}")
+                job_requirement_text.append(f"* {sentence.raw_text} \n")
             evaluator.job_requirements.append("\n".join(job_requirement_text))
         return evaluator
 
@@ -158,7 +150,6 @@ class Evaluator:
 
         job_requirements_text = []
         for i, job_requirement in enumerate(self.job_requirements):
-            print(job_requirement)
             job_requirements_text.append(f"Requirement №{i + 1}:" + job_requirement)
         job_requirements_text = "\n".join(job_requirements_text)
 
@@ -166,14 +157,22 @@ class Evaluator:
             contextgem.RatingConcept(
                 name="Job applicant rating",
                 description=(
-                    "Evaluate job applicant using his CV and interview.\n"
-                    f"You need to find scores and justifications for each job requirement, listed below:\n"
-                    f"{job_requirements_text}"
+                    "Оцените кандидата по каждому критерию отдельно по шкале 1-100.\n"
+                    "ВАЖНО: Дайте отдельную оценку для КАЖДОГО из перечисленных критериев.\n\n"
+                    "КРИТЕРИИ ДЛЯ ОЦЕНКИ:\n"
+                    f"{job_requirements_text}\n"
+                    "ПРАВИЛА ОЦЕНКИ:\n"
+                    "• 90-100: Полностью соответствует или превышает требования\n"
+                    "• 70-89: Хорошо соответствует большинству требований\n"
+                    "• 50-69: Частично соответствует, есть потенциал\n" 
+                    "• 30-49: Слабое соответствие\n"
+                    "• 1-29: Не соответствует требованиям\n\n"
+                    "Для КАЖДОГО критерия укажите конкретные факты из резюме/интервью."
                 ),
                 rating_scale=(1, 100),
                 add_justifications=True,
                 justification_depth="balanced",
-                justification_max_sents=5,
+                justification_max_sents=3,
             )
         ])
 
