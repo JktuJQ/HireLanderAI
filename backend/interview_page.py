@@ -1,12 +1,8 @@
-from flask import render_template, Blueprint
-from flask_socketio import emit
-from application import socketio
+from flask import render_template
+from .application import socketio, application
 
 
-interview_page_routes = Blueprint("interview_page_routes", __name__)
-
-
-@interview_page_routes.route("/interview", methods=["GET"])
+@application.route("/interview", methods=["GET"])
 def interview_route():
     """Interview page view function."""
     return render_template("interview.html")

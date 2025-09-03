@@ -23,9 +23,6 @@ application.extensions = {}
 socketio = SocketIO(application)
 
 
-from interview_page import interview_page_routes
-from index_page import index_page_routes
-
-
-application.register_blueprint(interview_page_routes)
-application.register_blueprint(index_page_routes)
+def run(port: int = 8080, host: str = "127.0.0.1"):
+    """Runs application on "http://{host}:{port}/"""
+    socketio.run(app=application, port=port, host=host, debug=True)
