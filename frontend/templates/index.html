@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block css %}
+<link rel="stylesheet" href="{{url_for('static', filename='css/index.css')}}">
+{% endblock %}
+
+{% block content %}
+<div class="heading mb-4">
+    <h1 class="display-4">Video Chat</h1>
+</div>
+<div class="container text-center mt-5">
+    <h4>Welcome to video chat!</h4>
+    <p>
+        Enter a custom room name, and click join! <br> 
+        Share the room name with your friends, so that they can join too!
+    </p>
+
+    <form id="room_form" method="POST" class="form shadow" style="max-width:400px; margin-left: auto; margin-right: auto;">
+        <div class="input-group mb-3">
+            <input type="text" name="room_id" id="room_id" class="form-control" placeholder="Custom Room Name" autofocus required>
+            <div class="invalid-feedback">Please fill out this field.</div>
+            <div class="input-group-append">
+                <input type="submit" value="Join" class="btn btn-primary">
+            </div>
+            
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -11,8 +11,8 @@ def main():
             exec(f"import tests.{args.test}")
         except ImportError:
             print(f"There is no {args.test} test file")
-        finally:
-            exit()
+        # finally:
+        #     exit()
     else:
         pass
 

@@ -3,7 +3,6 @@ from globals import *
 from flask import Flask
 from flask_socketio import SocketIO
 
-
 FLASK_SECRET_KEY: str = SECRETS["FLASK_SECRET_KEY"]
 TEMPLATE_FOLDER: str = "../frontend/templates"
 STATIC_FOLDER: str = "../frontend/static"

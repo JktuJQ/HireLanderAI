@@ -1,9 +1,11 @@
 from backend.application import application
-from flask import redirect, url_for
+from flask import redirect, url_for, render_template, request
 
 
-@application.route("/", methods=["GET"])
+@application.route("/", methods=["GET", "POST"])
 def index_route():
-    """Index page view function."""
+    if request.method == "POST":
+        room_id = request.form['room_id']
+        return redirect(url_for("entry_checkpoint", room_id=room_id))
 
-    return redirect(url_for("interview_route"))
+    return render_template("index.html")
