@@ -73,47 +73,46 @@ class Evaluator:
 
         document = Evaluator.__file_to_document(filename)
         document.add_aspects([
-        contextgem.Aspect(
-            name="Vacancy Title",
-            description="Extract ONLY the job title/position name. Look for: " \
-            "2) Bold headers indicating position, " \
-            "3) Main job title (not company name). " \
-            "Return only the position name, nothing else. ",
-            reference_depth="sentences",
-            add_justifications=False,
-        ),
-        
-        contextgem.Aspect(
-            name="Job Requirements Detail",
-            description="All specific requirements for the candidate. "
-                       "Focus on: education level, technical skills, experience, responsibilities.",
-            reference_depth="sentences",
-            add_justifications=True,
-            justification_depth="balanced",
-            concepts=[
-                contextgem.StringConcept(
-                    name="Education Level",
-                    description="Required education: высшее, среднее специальное, среднее профессиональное, etc."
-                ),
-                contextgem.StringConcept(
-                    name="Technical Stack",
-                    description="Specific technologies, programming languages, software, equipment mentioned. "
-                               "Include: servers, network equipment, programming languages, databases, OS."
-                ),
-                contextgem.StringConcept(
-                    name="Core Responsibilities", 
-                    description="Main job duties and tasks the employee must perform."
-                ),
-                contextgem.StringConcept(
-                    name="Required Skills",
-                    description="Soft skills and general abilities: communication, teamwork, analytical thinking, etc."
-                )
-            ]
-        )
-    ])
+            contextgem.Aspect(
+                name="Vacancy Title",
+                description=("Extract ONLY the job title/position name. Look for: "
+                             "2) Bold headers indicating position, "
+                             "3) Main job title (not company name). "
+                             "Return only the position name, nothing else. "),
+                reference_depth="sentences",
+                add_justifications=False,
+            ),
 
+            contextgem.Aspect(
+                name="Job Requirements Detail",
+                description="All specific requirements for the candidate. "
+                            "Focus on: education level, technical skills, experience, responsibilities.",
+                reference_depth="sentences",
+                add_justifications=True,
+                justification_depth="balanced",
+                concepts=[
+                    contextgem.StringConcept(
+                        name="Education Level",
+                        description="Required education: высшее, среднее специальное, среднее профессиональное, etc."
+                    ),
+                    contextgem.StringConcept(
+                        name="Technical Stack",
+                        description=("Specific technologies, programming languages, software, equipment mentioned. "
+                                     "Include: servers, network equipment, programming languages, databases, OS.")
+                    ),
+                    contextgem.StringConcept(
+                        name="Core Responsibilities",
+                        description="Main job duties and tasks the employee must perform."
+                    ),
+                    contextgem.StringConcept(
+                        name="Required Skills",
+                        description="Soft skills and general abilities: communication, teamwork, thinking, etc."
+                    )
+                ]
+            )
+        ])
 
-        processed_document = evaluator.extractor_model.extract_all(document, max_items_per_call = 1)
+        processed_document = evaluator.extractor_model.extract_all(document, max_items_per_call=1)
         evaluator.job_requirements.append(str(processed_document.aspects[0].extracted_items[0].value))
         for job_requirement in processed_document.aspects[1].extracted_items:
             job_requirement_text = [
@@ -164,7 +163,7 @@ class Evaluator:
                     "ПРАВИЛА ОЦЕНКИ:\n"
                     "• 90-100: Полностью соответствует или превышает требования\n"
                     "• 70-89: Хорошо соответствует большинству требований\n"
-                    "• 50-69: Частично соответствует, есть потенциал\n" 
+                    "• 50-69: Частично соответствует, есть потенциал\n"
                     "• 30-49: Слабое соответствие\n"
                     "• 1-29: Не соответствует требованиям\n\n"
                     "Для КАЖДОГО критерия укажите конкретные факты из резюме/интервью."
@@ -181,6 +180,3 @@ class Evaluator:
         for job_requirement, grade in zip(self.job_requirements, grades.extracted_items):
             evaluation[job_requirement] = (grade.value, grade.justification)
         return evaluation
-
-if __name__ == '__main__':
-    pass

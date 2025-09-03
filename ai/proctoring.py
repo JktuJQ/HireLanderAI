@@ -1,10 +1,28 @@
 from ultralytics import YOLO
 
+from PIL import Image
+from enum import Enum
+
+
+class SuspicionLevel(Enum):
+    """Enum that describes proctor concerns about interviewee."""
+
+    NORMAL = 0
+    SLIGHTLY_SUSPICIOUS = 1
+    SUSPICIOUS = 2
+    ALERT = 3
+
 
 class Proctor:
     """
-    Checks if a person uses mobile phone, not in the frame
-    or there are more than one people
+    Proctor for the interview that is trained to detect anomalies of interviewee behaviour and report it.
+
+    Proctor implements something like clever state machine,
+    which is able to distinguish one-off suspicious movement from consistent.
+    For example, if person only ever does something suspicion and
+    after than system is not detecting any anomalies for a long time,
+    then suspicion level is dropped.
+    Something similar also happens if person frequently behaves suspicious.
     """
 
     def __init__(self, path):
@@ -12,11 +30,17 @@ class Proctor:
         self.model_masks = YOLO('models/masks_model.pt')
         self.path = path
 
-    def is_cheating(self) -> None:
+    def analyze(self, image: Image, timecode: int) -> (SuspicionLevel, str):
         """
-        Prints if a person is cheating
+        Analyzes image of the interviewee and detects anomalies of his behaviour.
+
+        :param image: Image of the interviewee
+        :param timecode: Timecode of the image
+
+        :returns: Current concerns of the proctor - suspicion level and reasoning for it.
         """
-        results = self.model(self.path, conf=0.25, verbose=False)
+
+        results = self.model.predict(source=image, conf=0.25, verbose=False)
         results_mask = self.model_masks(self.path, conf=0.5, verbose=False)
         phone_detected = False
         people_count = 0
@@ -48,3 +72,4 @@ class Proctor:
             print("Попросите снять маску!")
         if flag == 0:
             print("Всё в порядке.")
+        return SuspicionLevel.NORMAL, ""

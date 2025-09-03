@@ -14,15 +14,14 @@ application = Flask(
     static_folder=STATIC_FOLDER
 )
 
-
 application.secret_key = FLASK_SECRET_KEY
 application.debug = DEBUG
-
 application.extensions = {}
 
 socketio = SocketIO(application)
 
 
 def run(port: int = 8080, host: str = "127.0.0.1"):
-    """Runs application on "http://{host}:{port}/"""
-    socketio.run(app=application, port=port, host=host, debug=True)
+    """Runs application on `http://{host}:{port}/`"""
+
+    socketio.run(app=application, port=port, host=host, debug=DEBUG)
