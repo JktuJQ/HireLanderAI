@@ -11,11 +11,11 @@ _room_of_sid = {} # stores room joined by an used
 _name_of_sid = {} # stores display name of users
 
 
-@application.route("/interview/room/<string:room_id>/")
-def interview_route(room_id):
-    if room_id not in session:
-        return redirect(url_for("checkpoint_route", room_id=room_id))
-    return render_template("interview.html", room_id=room_id, display_name=session[room_id]["name"], mute_audio=session[room_id]["mute_audio"], mute_video=session[room_id]["mute_video"])
+@application.route("/interview/room/<int:interview_room>/", methods=["GET"])
+def interview_route(interview_room):
+    if interview_room not in session:
+        return redirect(url_for("checkpoint_route", interview_room=interview_room))
+    return render_template("interview.html", interview_room=interview_room, display_name=session[interview_room]["name"], mute_audio=session[interview_room]["mute_audio"], mute_video=session[interview_room]["mute_video"])
 
 
 @socketio.on("connect")
@@ -40,26 +40,26 @@ def coding_field_update(data):
 @socketio.on("join-room")
 def on_join_room(data):
     sid = request.sid
-    room_id = data["room_id"]
-    display_name = session[room_id]["name"]
+    interview_room = data["interview_room"]
+    display_name = session[interview_room]["name"]
     
     # register sid to the room
-    join_room(room_id)
-    _room_of_sid[sid] = room_id
+    join_room(interview_room)
+    _room_of_sid[sid] = interview_room
     _name_of_sid[sid] = display_name
     
     # broadcast to others in the room
-    logger.info("[{}] New member joined: {}<{}>".format(room_id, display_name, sid))
-    emit("user-connect", {"sid": sid, "name": display_name}, broadcast=True, include_self=False, room=room_id)
+    logger.info("[{}] New member joined: {}<{}>".format(interview_room, display_name, sid))
+    emit("peer_connect", {"sid": sid, "name": display_name}, broadcast=True, include_self=False, interview_room=interview_room)
     
     # add to user list maintained on server
-    if room_id not in _users_in_room:
-        _users_in_room[room_id] = [sid]
-        emit("user-list", {"my_id": sid}) # send own id only
+    if interview_room not in _users_in_room:
+        _users_in_room[interview_room] = [sid]
+        emit("peer_list", {"id": sid}) # send own id only  TODO: `peer_list` event will try to reach for `peers`
     else:
-        usrlist = {u_id:_name_of_sid[u_id] for u_id in _users_in_room[room_id]}
-        emit("user-list", {"list": usrlist, "my_id": sid}) # send list of existing users to the new member
-        _users_in_room[room_id].append(sid) # add new member to user list maintained on server
+        usrlist = {u_id:_name_of_sid[u_id] for u_id in _users_in_room[interview_room]}
+        emit("peer_list", {"peers": usrlist, "id": sid}) # send list of existing users to the new member
+        _users_in_room[interview_room].append(sid) # add new member to user list maintained on server
 
     logger.info(f"\nusers: {_users_in_room}\n")
 
@@ -67,15 +67,15 @@ def on_join_room(data):
 @socketio.on("disconnect")
 def on_disconnect():
     sid = request.sid
-    room_id = _room_of_sid[sid]
+    interview_room = _room_of_sid[sid]
     display_name = _name_of_sid[sid]
 
-    logger.info("[{}] Member left: {}<{}>".format(room_id, display_name, sid))
-    emit("user-disconnect", {"sid": sid}, broadcast=True, include_self=False, room=room_id)
+    logger.info("[{}] Member left: {}<{}>".format(interview_room, display_name, sid))
+    emit("user_disconnect", {"sid": sid}, broadcast=True, include_self=False, interview_room=interview_room)
 
-    _users_in_room[room_id].remove(sid)
-    if len(_users_in_room[room_id]) == 0:
-        _users_in_room.pop(room_id)
+    _users_in_room[interview_room].remove(sid)
+    if len(_users_in_room[interview_room]) == 0:
+        _users_in_room.pop(interview_room)
 
     _room_of_sid.pop(sid)
     _name_of_sid.pop(sid)
@@ -92,4 +92,4 @@ def on_data(data):
 
     if data["type"] != "new-ice-candidate":
         logger.info("{} message from {} to {}".format(data["type"], sender_sid, target_sid))
-    emit("data", data, room=target_sid)
+    emit("data", data, interview_room=target_sid)  # TODO: `interview_room` as `target_sid`???????

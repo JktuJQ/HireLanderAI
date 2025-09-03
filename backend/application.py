@@ -20,7 +20,7 @@ application.extensions = {}
 socketio = SocketIO(application)
 
 
-def run(port: int = 8080, host: str = "127.0.0.1"):
+def run(host: str = HOST, port: int = PORT):
     """Runs application on `http://{host}:{port}/`"""
 
-    socketio.run(app=application, port=port, host=host, debug=DEBUG)
+    socketio.run(app=application, host=host, port=port, debug=DEBUG)
