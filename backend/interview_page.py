@@ -12,16 +12,16 @@ _name_of_sid = {} # stores display name of users
 
 
 @application.route("/interview/room/<string:room_id>/")
-def enter_room(room_id):
+def interview_route(room_id):
     if room_id not in session:
-        return redirect(url_for("entry_checkpoint", room_id=room_id))
-    return render_template("interview_page.html", room_id=room_id, display_name=session[room_id]["name"], mute_audio=session[room_id]["mute_audio"], mute_video=session[room_id]["mute_video"])
+        return redirect(url_for("checkpoint_route", room_id=room_id))
+    return render_template("interview.html", room_id=room_id, display_name=session[room_id]["name"], mute_audio=session[room_id]["mute_audio"], mute_video=session[room_id]["mute_video"])
 
 
 @socketio.on("connect")
 def on_connect():
     sid = request.sid
-    logger.info("New socket connected ", sid)
+    logger.info(f"New socket connected with sid: {sid}")
 
 
 @socketio.on("coding_field_update")
@@ -61,7 +61,7 @@ def on_join_room(data):
         emit("user-list", {"list": usrlist, "my_id": sid}) # send list of existing users to the new member
         _users_in_room[room_id].append(sid) # add new member to user list maintained on server
 
-    logger.info("\nusers: ", _users_in_room, "\n")
+    logger.info(f"\nusers: {_users_in_room}\n")
 
 
 @socketio.on("disconnect")
@@ -80,7 +80,7 @@ def on_disconnect():
     _room_of_sid.pop(sid)
     _name_of_sid.pop(sid)
 
-    logger.info("\nusers: ", _users_in_room, "\n")
+    logger.info(f"\nusers: {_users_in_room}\n")
 
 
 @socketio.on("data")
