@@ -8,9 +8,4 @@ __pycache__
 
 # Project related
 .env
-
-# Other
-.pdf
-.txt
-.png
-.pt
+data

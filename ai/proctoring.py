@@ -1,13 +1,15 @@
 from ultralytics import YOLO
 
-class Proctoring:
+
+class Proctor:
     """
     Checks if a person uses mobile phone, not in the frame
     or there are more than one people
     """
+
     def __init__(self, path):
         self.model = YOLO('yolo11x.pt')
-        self.model_masks = YOLO('masks_model.pt')
+        self.model_masks = YOLO('models/masks_model.pt')
         self.path = path
 
     def is_cheating(self) -> None:
@@ -30,7 +32,6 @@ class Proctoring:
                 if label == 'cell phone':
                     phone_detected = True
 
-
         mask_detected = results_mask[0].names[int(results_mask[0].boxes[0].cls[0])] == "with_mask"
 
         if people_count == 0:
@@ -47,9 +48,3 @@ class Proctoring:
             print("Попросите снять маску!")
         if flag == 0:
             print("Всё в порядке.")
-
-if __name__ == "__main__":
-    # testing
-    # pr = Proctoring("mask.png")
-    # pr.is_cheating()
-    pass

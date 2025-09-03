@@ -1,5 +1,5 @@
 from flask import render_template
-from .application import socketio, application
+from backend.application import socketio, application
 
 
 @application.route("/interview", methods=["GET"])
