@@ -1,23 +1,17 @@
 {% extends "base.html" %}
 
-{% block css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-{% endblock %}
-
 {% block content %}
 <div class="heading mb-4">
-    <h1 class="display-4">Video Chat</h1>        
-    <h4>You are about to join room: <span class="heading-mark">{{interview_room}}</span></h4>
+    <h1 class="display-4">Интервью</h1>
+    <h4>Вы собираетесь посетить комнату: <span class="heading-mark">{{interview_room}}</span></h4>
 </div>
 
 <div class="container text-center mt-5">
     <div class="row">
         <div class="col-sm-12 col-md-12 col-lg-6 mb-5">
-            <h4>What should others see you as?</h4>
+            <h4>Как другие пользователи будут вас видеть?</h4>
             <p>
-                Enter a Name that your friends will be able to recognize you with <br>
-                This name will be displayed to others!
+                Введите имя под которым вы будете видны другим участникам конференции.
             </p>
             <form method="POST" onsubmit="return validate()" class="form shadow" style="max-width:400px; margin-left: auto; margin-right: auto;">
                 <div class="input-group mb-3">
@@ -33,7 +27,7 @@
 
         <div class="col-sm-12 col-md-12 col-lg-6">
             <div id="permission_alert" class="alert alert-danger" role="alert" style="display: none; background-color: rgb(255, 130, 130); color: rgb(153, 32, 32);">
-                <strong>Please allow camera and mic permissions!</strong> 
+                <strong>Требуется доступ к микрофону и вебкамере!</strong>
             </div>                
             <div class="shadow p-0">
                 <div class="vid-wrapper" style="width: 100%; background-color: rgb(20,20,20);">
