@@ -40,27 +40,27 @@ function startCamera()
 
 socket.on("connect", ()=>{
     console.log("socket connected....", "myRoomID: ", myRoomID);
-    socket.emit("join-room", {"room_id": myRoomID});
+    socket.emit("join_room", {"interview_room": myRoomID});
 });
-socket.on("user-connect", (data)=>{
-    console.log("user-connect ", data);
+socket.on("peer_connect", (data)=>{
+    console.log("peer_connect ", data);
     let peer_id = data["sid"];
     let display_name = data["name"];
     _peer_list[peer_id] = undefined; // add new user to user list
     addVideoElement(peer_id, display_name);
 });
-socket.on("user-disconnect", (data)=>{
-    console.log("user-disconnect ", data);
+socket.on("peer_disconnect", (data)=>{
+    console.log("peer_disconnect ", data);
     let peer_id = data["sid"];
     closeConnection(peer_id);
     removeVideoElement(peer_id);
 });
-socket.on("user-list", (data)=>{
+socket.on("peer_list", (data)=>{
     console.log("user list recvd ", data);
-    myID = data["my_id"];
-    if( "list" in data) // not the first to connect to room, existing user list recieved
+    myID = data["target_id"];
+    if( "peers" in data) // not the first to connect to room, existing user list recieved
     {
-        let recvd_list = data["list"];  
+        let recvd_list = data["peers"];  
         // add existing users to user list
         for(peer_id in recvd_list)
         {
@@ -69,7 +69,7 @@ socket.on("user-list", (data)=>{
             addVideoElement(peer_id, display_name);
         } 
         start_webrtc();
-    }    
+    }
 });
 
 function closeConnection(peer_id)

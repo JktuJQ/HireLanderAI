@@ -4,8 +4,8 @@ from flask import render_template, url_for, redirect, request, session
 from backend.interview_page import logger
 
 
-@application.route("/interview/room/<int:interview_room>/checkpoint/", methods=["GET", "POST"])
-def checkpoint_route(interview_room: int):
+@application.route("/interview/<string:interview_room>/checkpoint/", methods=["GET", "POST"])
+async def checkpoint_route(interview_room: str):
     if request.method == "POST":
         logger.info(request.form)
         display_name = request.form["display_name"]

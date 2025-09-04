@@ -102,7 +102,7 @@ class WebRTCClient:
         await self.send("join_room", {"interview_room": self.interview_room})
 
     async def __on_peer_list(self, data):
-        self.id = data["id"]
+        self.id = data["target_id"]
         for peer_id in data["peers"].keys():
             self.peers[peer_id] = P2PConnection(self, peer_id)
 
@@ -116,7 +116,7 @@ class WebRTCClient:
         handlers[data["type"]](data)
 
     @classmethod
-    async def connect_to_socket(cls, name: str, interview_room: int) -> 'WebRTCClient':
+    async def connect_to_socket(cls, name: str, interview_room: str) -> 'WebRTCClient':
         client = cls(name, interview_room)
         async with aiohttp.ClientSession() as session:
             uri = f"ws://{HOST}:{PORT}/interview/{client.interview_room}/checkpoint/"
