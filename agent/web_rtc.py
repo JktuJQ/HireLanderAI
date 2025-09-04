@@ -3,6 +3,9 @@ from globals import *
 import aiohttp
 from socketio import AsyncClient
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
+import cv2
+import asyncio
+from av import VideoFrame
 
 
 class P2PConnection:
@@ -30,8 +33,19 @@ class P2PConnection:
 
     @staticmethod
     async def __on_track(track):
-        while True:
-            await track.recv()
+        print(f"Received track: {track}")
+        if track.kind == "video":
+            while True:
+                frame = await track.recv()
+                img = frame.to_ndarray()
+                img = cv2.cvtColor(img, cv2.COLOR_YUV2BGR_I420)
+                
+                # Open video stream window
+
+                # cv2.imshow(f"Video stream", img)
+                # if cv2.waitKey(1) & 0xFF == ord('q'):
+                #     break
+
 
     async def send_remote_description(self, message):
         await self.connection.setRemoteDescription(
@@ -66,8 +80,9 @@ class P2PConnection:
             }
         })
 
-    async def candidate(self, candidate):
-        foundation, component, _, priority, _, ip, port, protocol = candidate["candidate"].split(' ')
+    async def candidate(self, data):
+        data = data["candidate"]
+        foundation, component, protocol, priority, ip, port  = data["candidate"][10:].split(' ')[:6] # Just forget about this abomination 
         await self.connection.addIceCandidate(RTCIceCandidate(
             ip=ip,
             port=port,
@@ -76,8 +91,8 @@ class P2PConnection:
             foundation=foundation,
             component=component,
             type=priority,
-            sdpMid=candidate["sdpMid"],
-            sdpMLineIndex=candidate["sdpMLineIndex"]
+            sdpMid=data["sdpMid"],
+            sdpMLineIndex=data["sdpMLineIndex"]
         ))
 
 
@@ -102,9 +117,11 @@ class WebRTCClient:
         await self.send("join_room", {"interview_room": self.interview_room})
 
     async def __on_peer_list(self, data):
+        print(f"Received peer list: {data}")
         self.id = data["target_id"]
         for peer_id in data["peers"].keys():
             self.peers[peer_id] = P2PConnection(self, peer_id)
+            await self.peers[peer_id].offer()
 
     async def __on_data(self, data):
         peer = self.peers[data["sender_id"]]
@@ -113,20 +130,21 @@ class WebRTCClient:
             "answer": peer.send_remote_description,
             "new-ice-candidate": peer.candidate
         }
-        handlers[data["type"]](data)
+        await handlers[data["type"]](data)
 
     @classmethod
     async def connect_to_socket(cls, name: str, interview_room: str) -> 'WebRTCClient':
         client = cls(name, interview_room)
         async with aiohttp.ClientSession() as session:
-            uri = f"ws://{HOST}:{PORT}/interview/{client.interview_room}/checkpoint/"
+            uri = f"http://{HOST}:{PORT}/interview/{client.interview_room}/checkpoint/"
             async with session.post(
                     uri,
                     data={"display_name": client.name, "mute_audio": 1, "mute_video": 1},
                     allow_redirects=False
             ) as r:
                 headers = {"Cookie": f"session={r.cookies['session'].value}"}
-                await client.client.connect(uri, headers=headers)
+                socket_uri = f"http://{HOST}:{PORT}"
+                await client.client.connect(socket_uri, headers=headers)
         return client
 
     async def send(self, event_name: str, message):
