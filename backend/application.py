@@ -17,7 +17,7 @@ application.secret_key = FLASK_SECRET_KEY
 application.debug = DEBUG
 application.extensions = {}
 
-socketio = SocketIO(application)
+socketio = SocketIO(application, async_mode="eventlet")
 
 
 def run(host: str = HOST, port: int = PORT):

@@ -7,8 +7,8 @@ import cv2
 import time
 from PIL import Image
 
-from ai.proctoring import Proctor
-proctor = Proctor()
+# from ai.proctoring import Proctor
+# proctor = Proctor()
 
 class P2PConnection:
     """
@@ -37,23 +37,25 @@ class P2PConnection:
     async def __on_track(track):
         print(f"Received track: {track}")
         if track.kind == "video":
-            last_sent_time = 0
-            send_interval = 5
+            # last_sent_time = 0
+            # send_interval = 5
 
             while True:
                 frame = await track.recv()
-                current_time = time.time()
+                # current_time = time.time()
 
-                if current_time - last_sent_time >= send_interval:
-                    img = frame.to_ndarray()
-                    img = cv2.cvtColor(img, cv2.COLOR_YUV2RGB_I420)
-                    proctor.analyze(Image.fromarray(img), 1)
-                    last_sent_time = current_time
+                # if current_time - last_sent_time >= send_interval:
+                #     img = frame.to_ndarray()
+                #     img = cv2.cvtColor(img, cv2.COLOR_YUV2RGB_I420)
+                #     proctor.analyze(Image.fromarray(img), 1)
+                #     last_sent_time = current_time
+
                 # Open video stream window
-
-                # cv2.imshow(f"Video stream", img)
-                # if cv2.waitKey(1) & 0xFF == ord('q'):
-                #     break
+                img = frame.to_ndarray()
+                img = cv2.cvtColor(img, cv2.COLOR_YUV2BGR_I420)
+                cv2.imshow(f"Video stream", img)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
 
 
     async def send_remote_description(self, message):
@@ -128,6 +130,8 @@ class WebRTCClient:
     async def __on_peer_list(self, data):
         print(f"Received peer list: {data}")
         self.id = data["target_id"]
+        if "peers" not in data.keys():
+            raise NotImplementedError # Room is empty
         for peer_id in data["peers"].keys():
             self.peers[peer_id] = P2PConnection(self, peer_id)
             await self.peers[peer_id].offer()

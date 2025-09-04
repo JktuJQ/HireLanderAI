@@ -2,6 +2,8 @@ from backend.application import socketio, application
 from flask import render_template, url_for, redirect, request, session
 from flask_socketio import emit, join_room
 import logging
+import threading
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,6 +39,24 @@ def coding_field_update(data):
     )
     
 
+def run_agent_async(interview_room):
+    def agent_thread():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            from agent.application import run
+            logger.info(f"Starting agent in room: {interview_room}")
+            loop.run_until_complete(run())
+        except Exception as e:
+            logger.error(f"Error running agent: {e}")
+        finally:
+            loop.close()
+    
+    thread = threading.Thread(target=agent_thread, daemon=True)
+    thread.start()
+    logger.info(f"Agent thread started for room: {interview_room}")
+
+
 @socketio.on("join_room")
 def on_join_room(data):
     sid = request.sid
@@ -56,6 +76,10 @@ def on_join_room(data):
     if interview_room not in _users_in_room:
         _users_in_room[interview_room] = [sid]
         emit("peer_list", {"target_id": sid}) # send own id only  TODO: `peer_list` event will try to reach for `peers`
+        
+        logger.info("Someone entered empty room. Running agent")
+        run_agent_async(interview_room)
+
     else:
         usrlist = {u_id:_name_of_sid[u_id] for u_id in _users_in_room[interview_room]}
         emit("peer_list", {"peers": usrlist, "target_id": sid}) # send list of existing users to the new member

@@ -4,7 +4,7 @@ from asyncio import sleep
 
 async def run(name: str = "Agent", interview_room: str = "test-room"):
     """Runs AI agent on the backend socket."""
-
+    sleep(5) # Wait for first peer to connect
     client = await WebRTCClient.connect_to_socket(name, interview_room)
     # await client.create_offer()
     while True:
