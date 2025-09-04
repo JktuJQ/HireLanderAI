@@ -4,9 +4,11 @@ import aiohttp
 from socketio import AsyncClient
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
 import cv2
-import asyncio
-from av import VideoFrame
+import time
+from PIL import Image
 
+from ai.proctoring import Proctor
+proctor = Proctor()
 
 class P2PConnection:
     """
@@ -35,11 +37,18 @@ class P2PConnection:
     async def __on_track(track):
         print(f"Received track: {track}")
         if track.kind == "video":
+            last_sent_time = 0
+            send_interval = 5
+
             while True:
                 frame = await track.recv()
-                img = frame.to_ndarray()
-                img = cv2.cvtColor(img, cv2.COLOR_YUV2BGR_I420)
-                
+                current_time = time.time()
+
+                if current_time - last_sent_time >= send_interval:
+                    img = frame.to_ndarray()
+                    img = cv2.cvtColor(img, cv2.COLOR_YUV2RGB_I420)
+                    proctor.analyze(Image.fromarray(img), 1)
+                    last_sent_time = current_time
                 # Open video stream window
 
                 # cv2.imshow(f"Video stream", img)

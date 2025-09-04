@@ -25,10 +25,9 @@ class Proctor:
     Something similar also happens if person frequently behaves suspicious.
     """
 
-    def __init__(self, path):
+    def __init__(self):
         self.model = YOLO('yolo11x.pt')
         self.model_masks = YOLO('models/masks_model.pt')
-        self.path = path
 
     def analyze(self, image: Image, timecode: int) -> (SuspicionLevel, str):
         """
@@ -41,7 +40,7 @@ class Proctor:
         """
 
         results = self.model.predict(source=image, conf=0.25, verbose=False)
-        results_mask = self.model_masks(self.path, conf=0.5, verbose=False)
+        results_mask = self.model_masks(source=image, conf=0.5, verbose=False)
         phone_detected = False
         people_count = 0
         flag = 0
