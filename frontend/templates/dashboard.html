@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <span class="material-icons">dashboard</span>
+            Дэшборд пользователя
+        </h1>
+        <p class="page-subtitle">Отслеживайте статистику по проведенным интервью</p>
+    </div>
+</div>
+
+<div class="dashboard-content">
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <span class="material-icons">history</span>
+                История интервью:
+            </h2>
+            <div class="section-filters">
+                <button class="filter-btn active" data-filter="all">Все</button>
+                <button class="filter-btn" data-filter="created">Организация</button>
+                <button class="filter-btn" data-filter="attended">Участия</button>
+            </div>
+        </div>
+        <div class="interview-list" id="interviewList">
+
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>
+                <span class="material-icons">leaderboard</span>
+                История оценок интервью:
+            </h2>
+        </div>
+        <div class="evaluation-list" id="evaluationList">
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

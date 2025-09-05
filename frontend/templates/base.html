@@ -8,33 +8,77 @@
 
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/favicon.png') }}">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     {% block css %}{% endblock %}
 </head>
 <body>
-
-<nav>
-
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <span class="material-icons">video_call</span>
+            <span class="brand-text">HireLanderAI</span>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                    <span class="material-icons">home</span>
+                    Основная странца
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/evaluation" class="nav-link {% if request.endpoint == 'evaluation' %}active{% endif %}">
+                    <span class="material-icons">assessment</span>
+                    Оценка резюме
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/dashboard" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <span class="material-icons">dashboard</span>
+                    Дашборд
+                </a>
+            </li>
+        </ul>
+    </div>
 </nav>
 
-{% with flashed_messages = get_flashed_messages(with_categories=true) %}
-{% if flashed_messages %}
-<div class="flashed-messages">
-    {% for category, message in flashed_messages %}
-    <div class="flash {{ category }}">{{ message }}</div>
-    {% endfor %}
-</div>
-{% endif %}
-{% endwith %}
-
-<main>
+<main class="main-content">
     {% block content %}{% endblock %}
 </main>
 
-<footer>
-
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>HireLanderAI</h4>
+                <p>Платформа для автоматизации процесса устройства в Big-Tech компании с помощью ИИ.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Наши фичи:</h4>
+                <ul>
+                    <li>Лайв-интервью с ИИ помощником</li>
+                    <li>Оценка резюме по вакансии</li>
+                    <li>Система прокторинга</li>
+                    <li>Дашборд пользователя</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Наша команда:</h4>
+                <ul>
+                    <li>Мамонтов Олег - Тех-лид</li>
+                    <li>Жмелёв Глеб - Backend + Frontend разработчик</li>
+                    <li>Смоляр Родион - Computer Vision</li>
+                    <li>Масалов Кирилл - LLM</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 HireLanderAI.</p>
+        </div>
+    </div>
 </footer>
 
 <script src="{{ url_for('static', filename='js/base.js') }}"></script>

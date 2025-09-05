@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/evaluation.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <span class="material-icons">assessment</span>
+            Оценка резюме
+        </h1>
+        <p class="page-subtitle">Загрузите вакансию и резюме для получения развернутой оценки</p>
+    </div>
+</div>
+
+<div class="evaluation-container">
+    <div class="upload-section">
+        <div class="upload-card">
+            <div class="upload-header">
+                <span class="material-icons">work</span>
+                <h3>Вакансия</h3>
+            </div>
+            <div class="upload-area" id="vacancyUpload">
+                <div class="upload-content">
+                    <span class="material-icons upload-icon">cloud_upload</span>
+                    <p class="upload-text">Перенесите файл вакансии сюда или выберите его вручную</p>
+                    <p class="upload-hint">Поддерживаются PDF и DOCX файлы</p>
+                </div>
+                <input type="file" id="vacancyFile" accept=".pdf,,.docx" hidden>
+            </div>
+            <div class="file-info" id="vacancyInfo" style="display: none;">
+                <span class="material-icons">description</span>
+                <span class="file-name"></span>
+                <button class="remove-file" onclick="removeFile('vacancy')">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="upload-card">
+            <div class="upload-header">
+                <span class="material-icons">people</span>
+                <h3>Резюме</h3>
+            </div>
+            <div class="upload-area" id="cvUpload">
+                <div class="upload-content">
+                    <span class="material-icons upload-icon">cloud_upload</span>
+                    <p class="upload-text">Перенесите файлы резюме сюда или выберите их вручную</p>
+                    <p class="upload-hint">Поддерживаются PDF и DOCX файлы</p>
+                </div>
+                <input type="file" id="cvFiles" accept=".pdf,,.docx" multiple hidden>
+            </div>
+            <div class="files-list" id="cvFilesList"></div>
+        </div>
+    </div>
+
+    <div class="action-section">
+        <button id="evaluateBtn" class="btn btn-primary btn-large" disabled>
+            <span class="material-icons">psychology</span>
+            Начать оценку
+        </button>
+    </div>
+
+    <div id="loadingSection" class="loading-section" style="display: none;">
+        <div class="loading-animation">
+            <div class="loading-spinner"></div>
+            <h3>Анализ...</h3>
+            <p>Наш ИИ обрабатывает резюме и готовит развернутые оценки</p>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-text" id="progressText">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultsSection" class="results-section" style="display: none;">
+        <div class="results-header">
+            <h2>
+                <span class="material-icons">leaderboard</span>
+                Результаты:
+            </h2>
+            <p>Оценка резюме на основе соответствия требованиям вакансии:</p>
+        </div>
+        <div id="resultsContainer" class="results-container"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/evaluation.js') }}"></script>
+{% endblock %}
