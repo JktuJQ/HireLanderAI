@@ -2,13 +2,30 @@ from globals import *
 
 import aiohttp
 from socketio import AsyncClient
-from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration
+from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration, MediaStreamTrack
 import cv2
 import time
 from PIL import Image
 
 # from ai.proctoring import Proctor
 # proctor = Proctor()
+
+
+class AudioEchoTrack(MediaStreamTrack):
+    """
+    A media stream track that echoes back audio.
+    """
+    kind = "audio"
+
+    def __init__(self, track):
+        super().__init__()
+        self.track = track
+
+    async def recv(self):
+        frame = await self.track.recv()
+        # Echo back the audio frame
+        return frame
+
 
 class P2PConnection:
     """
@@ -28,13 +45,14 @@ class P2PConnection:
     def __init__(self, client: 'WebRTCClient', peer_id: int, configuration: RTCConfiguration = None):
         self.client = client
         self.peer_id = peer_id
+        self.pending_ice_candidates = []
 
         self.connection = RTCPeerConnection(configuration=configuration or P2PConnection.CONFIGURATION)
         self.connection.addTransceiver("video", "recvonly")
-        self.connection.on("track", P2PConnection.__on_track)
+        self.connection.addTransceiver("audio", "sendrecv")
+        self.connection.on("track", self.__on_track)
 
-    @staticmethod
-    async def __on_track(track):
+    async def __on_track(self, track):
         print(f"Received track: {track}")
         if track.kind == "video":
             # last_sent_time = 0
@@ -56,12 +74,18 @@ class P2PConnection:
                 cv2.imshow(f"Video stream", img)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
+        if track.kind == "audio":
+            echo_track = AudioEchoTrack(track)
+            self.connection.addTrack(echo_track)
 
-
-    async def send_remote_description(self, message):
+    async def set_remote_description(self, message):
         await self.connection.setRemoteDescription(
             RTCSessionDescription(sdp=message["sdp"]["sdp"], type=message["sdp"]["type"])
         )
+
+        for candidate in self.pending_ice_candidates:
+            await self.connection.addIceCandidate(candidate)
+        self.pending_ice_candidates = []
 
     async def offer(self):
         offer = await self.connection.createOffer()
@@ -77,7 +101,8 @@ class P2PConnection:
         })
 
     async def answer(self, offer):
-        await self.send_remote_description(offer)  # TODO: if this is not needed, this function is the same as `offer`
+        # TODO: if this is not needed, this function is the same as `offer`. UPD: This is needed but it might be a good idea to make one offer_answer function
+        await self.set_remote_description(offer)  
 
         answer = await self.connection.createAnswer()
         await self.connection.setLocalDescription(answer)
@@ -93,18 +118,23 @@ class P2PConnection:
 
     async def candidate(self, data):
         data = data["candidate"]
-        foundation, component, protocol, priority, ip, port  = data["candidate"][10:].split(' ')[:6] # Just forget about this abomination 
-        await self.connection.addIceCandidate(RTCIceCandidate(
+        foundation, component, protocol, priority, ip, port, _, type  = data["candidate"][10:].split(' ')[:8] # Just forget about this abomination 
+        candidate = RTCIceCandidate(
             ip=ip,
-            port=port,
+            port=int(port),
             protocol=protocol,
-            priority=priority,
-            foundation=foundation,
-            component=component,
-            type=priority,
+            priority=int(priority),
+            foundation=int(foundation),
+            component=int(component),
+            type=type,
             sdpMid=data["sdpMid"],
             sdpMLineIndex=data["sdpMLineIndex"]
-        ))
+        )
+
+        if self.connection.remoteDescription:
+            await self.connection.addIceCandidate(candidate)
+        else:
+            self.pending_ice_candidates.append(candidate)
 
 
 class WebRTCClient:
@@ -130,17 +160,21 @@ class WebRTCClient:
     async def __on_peer_list(self, data):
         print(f"Received peer list: {data}")
         self.id = data["target_id"]
-        if "peers" not in data.keys():
-            raise NotImplementedError # Room is empty
+        if "peers" not in data.keys(): # Room is empty
+            return
         for peer_id in data["peers"].keys():
             self.peers[peer_id] = P2PConnection(self, peer_id)
             await self.peers[peer_id].offer()
 
     async def __on_data(self, data):
-        peer = self.peers[data["sender_id"]]
+        sender_id = data["sender_id"]
+        if sender_id not in self.peers.keys(): # New peer might send offer before it's in self.peers
+            self.peers[sender_id] = P2PConnection(self, sender_id)
+        peer = self.peers[sender_id]
+            
         handlers = {
             "offer": peer.answer,
-            "answer": peer.send_remote_description,
+            "answer": peer.set_remote_description,
             "new-ice-candidate": peer.candidate
         }
         await handlers[data["type"]](data)
