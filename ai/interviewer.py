@@ -1,3 +1,6 @@
+from globals import *
+
+
 class Interviewer:
     """
     AI interviewer model is able to listen and speak with interviewee
@@ -20,3 +23,5 @@ class Interviewer:
         # https://github.com/KoljaB/RealtimeSTT/blob/master/tests/minimalistic_talkbot.py
 
     # Still need to think about the API, but it seems that realtimedness complicates things a LOT.
+    def process_text(text):
+        print(text)

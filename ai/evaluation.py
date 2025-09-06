@@ -19,7 +19,7 @@ class Evaluator:
 
         self.extractor_model = contextgem.DocumentLLM(
             model="mistral/codestral-2508",
-            api_key=SECRETS["OPENAI_API_KEY"],
+            api_key=SECRETS["EVALUATOR_MODEL_API_KEY"],
             output_language="adapt",
         )
 
@@ -168,8 +168,8 @@ class Evaluator:
                     "• 50-69: Частично соответствует, есть потенциал\n"
                     "• 30-49: Слабое соответствие\n"
                     "• 1-29: Не соответствует требованиям\n\n"
-                    "Для КАЖДОГО критерия укажите конкретные факты из резюме/интервью."
-                    "подтверждающие вашу оценку. "
+                    "Для КАЖДОГО критерия укажите конкретные факты из резюме/интервью и\n"
+                    "ВАЖНО: указать в обосновании почему оценка не выше и не ниже установленной"
                 ),
                 rating_scale=(1, 100),
                 add_justifications=True,
