@@ -24,22 +24,35 @@
         </div>
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="/" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
+                <a href="{{url_for('index_route')}}" class="nav-link {% if request.endpoint == 'index_route' %}active{% endif %}">
                     <span class="material-icons">home</span>
-                    Основная странца
+                    Основная страница
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/evaluation" class="nav-link {% if request.endpoint == 'evaluation' %}active{% endif %}">
+                <a href="{{url_for('evaluation_route')}}" class="nav-link {% if request.endpoint == 'evaluation_route' %}active{% endif %}">
                     <span class="material-icons">assessment</span>
                     Оценка резюме
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/dashboard" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <a href="{{url_for('dashboard_route')}}" class="nav-link {% if request.endpoint == 'dashboard_route' %}active{% endif %}">
                     <span class="material-icons">dashboard</span>
                     Дашборд
                 </a>
+            </li>
+            <li class="nav-item">
+                {% if session.get('user_id') %}
+                <a href="{{url_for('profile_route')}}" class="nav-link {% if request.endpoint == 'profile_route' %}active{% endif %}">
+                    <span class="material-icons">account_circle</span>
+                    Профиль
+                </a>
+                {% else %}
+                <a href="{{url_for('login_route')}}" class="nav-link {% if request.endpoint == 'login_route' %}active{% endif %}">
+                    <span class="material-icons">login</span>
+                    Войти
+                </a>
+                {% endif %}
             </li>
         </ul>
     </div>
@@ -48,38 +61,6 @@
 <main class="main-content">
     {% block content %}{% endblock %}
 </main>
-
-<footer class="footer">
-    <div class="footer-container">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>HireLanderAI</h4>
-                <p>Платформа для автоматизации процесса устройства в Big-Tech компании с помощью ИИ.</p>
-            </div>
-            <div class="footer-section">
-                <h4>Наши фичи:</h4>
-                <ul>
-                    <li>Лайв-интервью с ИИ помощником</li>
-                    <li>Оценка резюме по вакансии</li>
-                    <li>Система прокторинга</li>
-                    <li>Дашборд пользователя</li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>Наша команда:</h4>
-                <ul>
-                    <li>Мамонтов Олег - Тех-лид</li>
-                    <li>Жмелёв Глеб - Backend + Frontend разработчик</li>
-                    <li>Смоляр Родион - Computer Vision</li>
-                    <li>Масалов Кирилл - LLM</li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 HireLanderAI.</p>
-        </div>
-    </div>
-</footer>
 
 <script src="{{ url_for('static', filename='js/base.js') }}"></script>
 {% block js %}{% endblock %}

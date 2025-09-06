@@ -1,80 +1,61 @@
 {% extends "base.html" %}
 
+{% block title %} - Главная страница{% endblock %}
+
 {% block css %}
-<link rel="stylesheet" href="{{url_for('static', filename='css/index.css')}}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="hero-section">
-    <div class="hero-container">
-        <div class="hero-content">
-            <h1 class="hero-title">Автоматизированные ИИ интервью</h1>
-            <p class="hero-subtitle">Выбирайте лучшего кандидата под вакансию используя множество инструментов, предоставляемых HireLanderAI</p>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Автоматизированные собеседования с ИИ</h1>
+        <p class="hero-subtitle">Проводите и проходите собеседования с помощью искусственного интеллекта</p>
 
-            <div class="room-widget">
-                <div class="widget-section">
-                    <h3>Создать новую комнату для интервью:</h3>
-                    <button id="createRoomBtn" class="btn btn-primary">
-                        <span class="material-icons">add</span>
-                        Создать комнату
-                    </button>
-                </div>
-
-                <div class="widget-divider">
-                    <span>ИЛИ</span>
-                </div>
-
-                <div class="widget-section">
-                    <h3>Зайдите в существующую комнату</h3>
-                    <div class="join-room-form">
-                        <input type="text" id="roomCodeInput" placeholder="Enter room code" class="room-input">
-                        <button id="joinRoomBtn" class="btn btn-secondary">
-                            <span class="material-icons">login</span>
-                            Зайти в комнату
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <div class="hero-actions">
+            <a href="{{url_for('create_interview_route')}}" class="btn btn-outline">
+                <span class="material-icons">video_call</span>
+                Создать комнату
+            </a>
+            <a href="{{url_for('join_interview_route')}}" class="btn btn-outline">
+                <span class="material-icons">meeting_room</span>
+                Присоединиться
+            </a>
         </div>
+    </div>
+</section>
 
-        <div class="hero-features">
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <h2 class="section-title">Почему HireLanderAI?</h2>
+
+        <div class="features-grid">
             <div class="feature-card">
-                <span class="material-icons">code</span>
-                <h4>Лайв-кодинг</h4>
-                <p>Коллаборативное программирование в реальном времени</p>
+                <div class="feature-icon">
+                    <span class="material-icons">auto_awesome</span>
+                </div>
+                <h3>ИИ-анализ ответов</h3>
+                <p>Наш ИИ анализирует ответы кандидатов в реальном времени и предоставляет детальную оценку</p>
             </div>
+
             <div class="feature-card">
-                <span class="material-icons">analytics</span>
-                <h4>Умная аналитика</h4>
-                <p>Развернутая оценка и объяснения</p>
+                <div class="feature-icon">
+                    <span class="material-icons">schedule</span>
+                </div>
+                <h3>Экономия времени</h3>
+                <p>Автоматизируйте процесс собеседований и сосредоточьтесь на лучших кандидатах</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <span class="material-icons">insights</span>
+                </div>
+                <h3>Детальная аналитика</h3>
+                <p>Получайте подробные отчеты и аналитику по каждому собеседованию</p>
             </div>
         </div>
     </div>
-</div>
-
-<div id="alertModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modalTitle">Комната создана</h3>
-            <span class="close" id="closeModal">&times;</span>
-        </div>
-        <div class="modal-body">
-            <p id="modalMessage"></p>
-            <div id="roomCodeDisplay" class="room-code-display" style="display: none;">
-                <span id="roomCodeText"></span>
-                <button id="copyCodeBtn" class="btn btn-small">
-                    <span class="material-icons">content_copy</span>
-                    Скопировать
-                </button>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button id="modalOkBtn" class="btn btn-primary">Да</button>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block js %}
-<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+</section>
 {% endblock %}

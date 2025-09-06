@@ -1,7 +1,7 @@
 from backend.application import application
 
 from flask import render_template, url_for, redirect, request, session
-from backend.interview_page import logger
+from backend.interview import logger
 
 
 @application.route("/interview/<string:interview_room>/checkpoint/", methods=["GET", "POST"])
