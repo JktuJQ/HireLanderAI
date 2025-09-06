@@ -5,18 +5,110 @@
 {% endblock %}
 
 {% block content %}
-<div class="header">
-    <h1>Live Coding Session</h1>
+<div class="interview-header">
+    <div class="interview-info">
+        <h1>Интервью</h1>
+        <div class="room-details">
+            <span class="room-id">Комната: <strong>{{interview_room or 'НЕИЗВЕСТНО'}}</strong></span>
+            <span class="participant-name">{{display_name or 'Участник'}}</span>
+        </div>
+    </div>
+    <div class="interview-timer">
+        <span class="material-icons">Время</span>
+        <span id="timerDisplay">00:00:00</span>
+    </div>
 </div>
-<div class="editor-container">
-    <textarea id="code-editor" placeholder="Start typing your code here..."></textarea>
+
+<div class="interview-layout">
+    <div class="video-section">
+        <div class="video-grid">
+            <div class="video-container interviewer">
+                <div class="video-wrapper">
+                    <video id="interviewer_vid" autoplay muted></video>
+                    <div class="video-overlay">
+                        <span class="participant-label">Интервьюер</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-container bot-interviewer">
+                <div class="video-wrapper">
+                    <div class="bot-avatar">
+                        <span class="material-icons">smart_toy</span>
+                    </div>
+                    <div class="video-overlay">
+                        <span class="participant-label">ИИ помощник рекрутера</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="video-container interviewee">
+                <div class="video-wrapper">
+                    <video id="local_vid" autoplay muted></video>
+                    <div class="video-overlay">
+                        <span class="participant-label">Вы</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="video-controls">
+            <button id="bttn_mute" class="control-btn">
+                <span id="mute_icon" class="material-icons">mic</span>
+            </button>
+            <button id="bttn_vid_mute" class="control-btn">
+                <span id="vid_mute_icon" class="material-icons">videocam</span>
+            </button>
+            <button id="call_end" class="control-btn end-call">
+                <span class="material-icons">call_end</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="coding-section">
+        <div class="coding-header">
+            <h3>
+                <span class="material-icons">code</span>
+                Общее поле для кода
+            </h3>
+            <div class="coding-controls">
+                <select id="languageSelect" class="language-select">
+                    <option value="python">Python</option>
+                    <option value="cpp">C++</option>
+                </select>
+                <button id="runCode" class="btn btn-small">
+                    <span class="material-icons">play_arrow</span>
+                    Запустить
+                </button>
+            </div>
+        </div>
+        <div class="code-editor-container">
+            <textarea id="code-editor" placeholder="# Start typing your code here...
+def solution():
+    print('Hello world')
+"></textarea>
+        </div>
+        <div class="code-output">
+            <div class="output-header">
+                <span class="material-icons">terminal</span>
+                Вывод:
+            </div>
+        </div>
+    </div>
 </div>
-<div class="status-bar" id="status">
-    Connected: 1
+
+<div id="connectionStatus" class="connection-status">
+    <span class="material-icons">wifi</span>
+    <span id="statusText">Подключен: 1 участник</span>
 </div>
 {% endblock %}
 
 {% block js %}
+<script type="text/javascript">
+    var myRoomID = "{{interview_room or 'НЕИЗВЕСТНО'}}";
+    var myName = "{{display_name or 'Участник'}}";
+    var audioMuted = {{mute_audio or 'false'}};
+    var videoMuted = {{mute_video or 'false'}};
+</script>
 <script src="{{ url_for('static', filename='js/interview.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js" integrity="sha512-v8ng/uGxkge3d1IJuEo6dJP8JViyvms0cly9pnbfRxT6/31c3dRWxIiwGnMSWwZjHKOuY3EVmijs7k1jz/9bLA==" crossorigin="anonymous"></script>
 {% endblock %}

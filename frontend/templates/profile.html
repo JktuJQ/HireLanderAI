@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %} - Профиль{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Header Section -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <img src="{{ url_for('static', filename=(user.avatar_filepath or 'assets/default_avatar.png')) }}"
+                 alt="Avatar" class="avatar-image">
+            <form method="POST" action="{{ url_for('profile_route') }}" enctype="multipart/form-data"
+                  class="avatar-upload-form">
+                {{ avatar_form.hidden_tag() }}
+                <label for="avatar" class="avatar-upload" title="Сменить аватар">
+                    <span class="material-icons">photo_camera</span>
+                </label>
+                {{ avatar_form.avatar(style="display: none", id="avatar", onchange="this.form.submit()") }}
+            </form>
+        </div>
+        
+        <div class="profile-info">
+            <h1 class="profile-name">
+                {% if user.first_name and user.last_name %}
+                    {{ user.last_name }} {{ user.first_name }}
+                {% else %}
+                    {{ user.username }}
+                {% endif %}
+            </h1>
+            <div class="profile-username">@{{ user.username }}</div>
+            <span class="profile-role">
+                {% if user.role_id == 0 %}Интервьюер{% else %}Кандидат{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="profile-stats">
+        <div class="stat-card">
+            <div class="stat-number">12</div>
+            <div class="stat-label">Проведено собеседований</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">85%</div>
+            <div class="stat-label">Успешность</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">7</div>
+            <div class="stat-label">Отзывов</div>
+        </div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="profile-content">
+        <!-- Edit Form -->
+        <div class="profile-section">
+            <h2 class="section-title">Редактировать профиль</h2>
+            <form method="POST" action="{{ url_for('profile_route') }}" enctype="multipart/form-data" class="profile-form">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        {{ form.last_name.label(class="form-label") }}
+                        {{ form.last_name(class="form-input", value=user.last_name or "") }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.first_name.label(class="form-label") }}
+                        {{ form.first_name(class="form-input", value=user.first_name or "") }}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        {{ form.telegram.label(class="form-label") }}
+                        {{ form.telegram(class="form-input", value=user.telegram or "") }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-input", value=user.email or "") }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.phone.label(class="form-label") }}
+                        {{ form.phone(class="form-input", value=user.phone or "") }}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    {{ form.bio.label(class="form-label") }}
+                    {{ form.bio(class="form-textarea") }}
+                    {% if user.bio %}{{ form.bio.process_data(user.bio) }}{% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.document.label(class="form-label") }}
+                    {{ form.document(class="form-input file-input") }}
+                    {% if user.document_filepath %}
+                    <div class="file-info">
+                        <span class="material-icons">description</span>
+                        <span class="file-name">Текущий файл: {{ user.document_filepath }}</span>
+                        <a href="{{ url_for('static', filename=user.document_filepath) }}" class="file-download" download>
+                            Скачать
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {{ form.submit(class="btn btn-primary") }}
+            </form>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="profile-section">
+            <h2 class="section-title">Контактная информация</h2>
+            <div class="contact-info">
+                {% if user.telegram %}
+                <div class="contact-item">
+                    <span class="material-icons">telegram</span>
+                    <span class="contact-label">Telegram:</span>
+                    <span class="contact-value">{{ user.telegram }}</span>
+                </div>
+                {% endif %}
+                {% if user.email %}
+                <div class="contact-item">
+                    <span class="material-icons">email</span>
+                    <span class="contact-label">Email:</span>
+                    <span class="contact-value">{{ user.email }}</span>
+                </div>
+                {% endif %}
+                {% if user.phone %}
+                <div class="contact-item">
+                    <span class="material-icons">phone</span>
+                    <span class="contact-label">Телефон:</span>
+                    <span class="contact-value">{{ user.phone }}</span>
+                </div>
+                {% endif %}
+                {% if user.bio %}
+                <div class="contact-item">
+                    <span class="material-icons">info</span>
+                    <span class="contact-label">О себе:</span>
+                    <span class="contact-value">{{ user.bio }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+// Auto-submit avatar form when file is selected
+document.getElementById('avatar').addEventListener('change', function() {
+    this.form.submit();
+});
+</script>
+{% endblock %}

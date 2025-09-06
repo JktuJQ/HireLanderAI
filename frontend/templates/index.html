@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %} - Главная страница{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Автоматизированные собеседования с ИИ</h1>
+        <p class="hero-subtitle">Проводите и проходите собеседования с помощью искусственного интеллекта</p>
+
+        <div class="hero-actions">
+            <a href="{{url_for('create_interview_route')}}" class="btn btn-outline">
+                <span class="material-icons">video_call</span>
+                Создать комнату
+            </a>
+            <a href="{{url_for('join_interview_route')}}" class="btn btn-outline">
+                <span class="material-icons">meeting_room</span>
+                Присоединиться
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <h2 class="section-title">Почему HireLanderAI?</h2>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <span class="material-icons">auto_awesome</span>
+                </div>
+                <h3>ИИ-анализ ответов</h3>
+                <p>Наш ИИ анализирует ответы кандидатов в реальном времени и предоставляет детальную оценку</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <span class="material-icons">schedule</span>
+                </div>
+                <h3>Экономия времени</h3>
+                <p>Автоматизируйте процесс собеседований и сосредоточьтесь на лучших кандидатах</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <span class="material-icons">insights</span>
+                </div>
+                <h3>Детальная аналитика</h3>
+                <p>Получайте подробные отчеты и аналитику по каждому собеседованию</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

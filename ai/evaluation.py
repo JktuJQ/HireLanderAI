@@ -46,7 +46,7 @@ class Evaluator:
         """
         Converts file into structured document.
 
-        :param filename: Name of the file (only PDF and DOCX are supported)
+        :param filename: Name of the file (only PDF, DOCX and TXT are supported)
         :return: Structured document with contents of given file
         """
 
@@ -55,8 +55,11 @@ class Evaluator:
             document = contextgem.Document(raw_text=Evaluator.__pdf_to_text(filename))
         elif extension == "docx":
             document = contextgem.DocxConverter().convert(filename)
+        elif extension == "txt":
+            with open(filename) as f:
+                document = contextgem.Document(raw_text=f.read())
         else:
-            raise Exception("Only PDF or DOCX files are allowed")
+            raise Exception("Only PDF, DOCX and TXT files are allowed")
 
         return document
 
@@ -65,7 +68,7 @@ class Evaluator:
         """
         Extracts job requirements from file.
 
-        :param filename: Name of file (PDF and DOCX are supported)
+        :param filename: Name of file (PDF, DOCX and TXT are supported)
 
         :return: List of job requirements (first element of the list will contain vacation name)
         """
