@@ -186,7 +186,7 @@ class Evaluator:
             evaluation[job_requirement] = (grade.value, grade.justification)
         return evaluation
 
-    #TODO: finish this ASAP!!!!!!!
+    #TODO: finish this ASAP!!!!!!
     def generate_questions(self, criteria):
         """Generates questions for the interview based on the job description"""
 
