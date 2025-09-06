@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %} - Профиль{% endblock %}
+{% block title %} - Профиль {{ user.username }}{% endblock %}
 
 {% block css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
@@ -11,8 +11,9 @@
     <!-- Header Section -->
     <div class="profile-header">
         <div class="profile-avatar">
-            <img src="{{ url_for('static', filename=(user.avatar_filepath or 'assets/default_avatar.png')) }}"
+            <img src="{{ url_for('static', filename=('uploads/avatars/' + user.avatar_filepath) if user.avatar_filepath else 'assets/default_avatar.png') }}"
                  alt="Avatar" class="avatar-image">
+            {% if is_own_profile %}
             <form method="POST" action="{{ url_for('profile_route') }}" enctype="multipart/form-data"
                   class="avatar-upload-form">
                 {{ avatar_form.hidden_tag() }}
@@ -21,131 +22,219 @@
                 </label>
                 {{ avatar_form.avatar(style="display: none", id="avatar", onchange="this.form.submit()") }}
             </form>
+            {% endif %}
         </div>
         
         <div class="profile-info">
             <h1 class="profile-name">
                 {% if user.first_name and user.last_name %}
-                    {{ user.last_name }} {{ user.first_name }}
+                    {{ user.first_name }} {{ user.last_name }}
                 {% else %}
                     {{ user.username }}
                 {% endif %}
             </h1>
             <div class="profile-username">@{{ user.username }}</div>
             <span class="profile-role">
-                {% if user.role_id == 0 %}Интервьюер{% else %}Кандидат{% endif %}
+                {% if user.role_id == 1 %}Интервьюер{% else %}Кандидат{% endif %}
             </span>
+            
+            <!-- Share Button -->
+            <div class="profile-actions">
+                {% if is_own_profile %}
+                <button class="btn btn-outline share-btn" onclick="copyProfileLink()">
+                    <span class="material-icons">share</span>
+                    Поделиться профилем
+                </button>
+                {% else %}
+                <a href="{{ url_for('profile_route') }}" class="btn btn-outline">
+                    <span class="material-icons">person</span>
+                    Мой профиль
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="profile-stats">
+            <div class="stat-card">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Собеседований</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">85%</div>
+                <div class="stat-label">Успешность</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">7</div>
+                <div class="stat-label">Отзывов</div>
+            </div>
         </div>
     </div>
 
-    <!-- Stats Section -->
-    <div class="profile-stats">
-        <div class="stat-card">
-            <div class="stat-number">12</div>
-            <div class="stat-label">Проведено собеседований</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">85%</div>
-            <div class="stat-label">Успешность</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">7</div>
-            <div class="stat-label">Отзывов</div>
-        </div>
-    </div>
-
-    <!-- Content Section -->
-    <div class="profile-content">
-        <!-- Edit Form -->
-        <div class="profile-section">
-            <h2 class="section-title">Редактировать профиль</h2>
-            <form method="POST" action="{{ url_for('profile_route') }}" enctype="multipart/form-data" class="profile-form">
-                {{ form.hidden_tag() }}
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        {{ form.last_name.label(class="form-label") }}
-                        {{ form.last_name(class="form-input", value=user.last_name or "") }}
+    <!-- Main Content Grid -->
+    <div class="profile-grid">
+        <!-- Left Column: Contact Info -->
+        <div class="profile-column">
+            <div class="profile-section contact-section">
+                <h2 class="section-title">
+                    <span class="material-icons">contact_page</span>
+                    Контактная информация
+                </h2>
+                <div class="contact-info">
+                    {% if user.telegram %}
+                    <div class="contact-item">
+                        <span class="contact-icon material-icons">telegram</span>
+                        <div class="contact-details">
+                            <span class="contact-label">Telegram</span>
+                            <span class="contact-value">{{ user.telegram }}</span>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        {{ form.first_name.label(class="form-label") }}
-                        {{ form.first_name(class="form-input", value=user.first_name or "") }}
+                    {% endif %}
+                    {% if user.email %}
+                    <div class="contact-item">
+                        <span class="contact-icon material-icons">email</span>
+                        <div class="contact-details">
+                            <span class="contact-label">Email</span>
+                            <span class="contact-value">{{ user.email }}</span>
+                        </div>
                     </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        {{ form.telegram.label(class="form-label") }}
-                        {{ form.telegram(class="form-input", value=user.telegram or "") }}
+                    {% endif %}
+                    {% if user.phone %}
+                    <div class="contact-item">
+                        <span class="contact-icon material-icons">phone</span>
+                        <div class="contact-details">
+                            <span class="contact-label">Телефон</span>
+                            <span class="contact-value">{{ user.phone }}</span>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-input", value=user.email or "") }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.phone.label(class="form-label") }}
-                        {{ form.phone(class="form-input", value=user.phone or "") }}
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    {{ form.bio.label(class="form-label") }}
-                    {{ form.bio(class="form-textarea") }}
-                    {% if user.bio %}{{ form.bio.process_data(user.bio) }}{% endif %}
-                </div>
-
-                <div class="form-group">
-                    {{ form.document.label(class="form-label") }}
-                    {{ form.document(class="form-input file-input") }}
+                    {% endif %}
+                    
+                    <!-- Document Preview -->
                     {% if user.document_filepath %}
-                    <div class="file-info">
-                        <span class="material-icons">description</span>
-                        <span class="file-name">Текущий файл: {{ user.document_filepath }}</span>
-                        <a href="{{ url_for('static', filename=user.document_filepath) }}" class="file-download" download>
-                            Скачать
-                        </a>
+                    <div class="contact-item">
+                        <span class="contact-icon material-icons">description</span>
+                        <div class="contact-details">
+                            <span class="contact-label">
+                                {% if user.role_id == 1 %}Вакансия{% else %}Резюме{% endif %}
+                            </span>
+                            <a href="{{ url_for('static', filename=('uploads/' + ('vacancies/' if user.role_id == 1 else 'cvs/') + user.document_filepath)) }}" 
+                               class="file-download" download>
+                                Скачать файл
+                            </a>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
 
-                {{ form.submit(class="btn btn-primary") }}
-            </form>
-        </div>
-
-        <!-- Contact Info -->
-        <div class="profile-section">
-            <h2 class="section-title">Контактная информация</h2>
-            <div class="contact-info">
-                {% if user.telegram %}
-                <div class="contact-item">
-                    <span class="material-icons">telegram</span>
-                    <span class="contact-label">Telegram:</span>
-                    <span class="contact-value">{{ user.telegram }}</span>
-                </div>
-                {% endif %}
-                {% if user.email %}
-                <div class="contact-item">
-                    <span class="material-icons">email</span>
-                    <span class="contact-label">Email:</span>
-                    <span class="contact-value">{{ user.email }}</span>
-                </div>
-                {% endif %}
-                {% if user.phone %}
-                <div class="contact-item">
-                    <span class="material-icons">phone</span>
-                    <span class="contact-label">Телефон:</span>
-                    <span class="contact-value">{{ user.phone }}</span>
-                </div>
-                {% endif %}
                 {% if user.bio %}
-                <div class="contact-item">
-                    <span class="material-icons">info</span>
-                    <span class="contact-label">О себе:</span>
-                    <span class="contact-value">{{ user.bio }}</span>
+                <div class="bio-section">
+                    <h3 class="bio-title">
+                        <span class="material-icons">info</span>
+                        О себе
+                    </h3>
+                    <p class="bio-content">{{ user.bio }}</p>
                 </div>
                 {% endif %}
             </div>
         </div>
+
+        <!-- Right Column: Edit Form (only for own profile) -->
+        {% if is_own_profile %}
+        <div class="profile-column">
+            <div class="profile-section edit-section">
+                <h2 class="section-title">
+                    <span class="material-icons">edit</span>
+                    Редактировать профиль
+                </h2>
+                <form method="POST" action="{{ url_for('profile_route') }}" enctype="multipart/form-data" class="profile-form">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            {{ form.first_name.label(class="form-label") }}
+                            {{ form.first_name(class="form-input", value=user.first_name or "", placeholder="Ваше имя") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.last_name.label(class="form-label") }}
+                            {{ form.last_name(class="form-input", value=user.last_name or "", placeholder="Ваша фамилия") }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.telegram.label(class="form-label") }}
+                        <div class="input-with-prefix">
+                            <span class="input-prefix">@</span>
+                            {{ form.telegram(class="form-input", value=user.telegram or "", placeholder="username") }}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-input", value=user.email or "", placeholder="email@example.com") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.phone.label(class="form-label") }}
+                            {{ form.phone(class="form-input", value=user.phone or "", placeholder="+7 (999) 999-99-99") }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.bio.label(class="form-label") }}
+                        {{ form.bio(class="form-textarea", placeholder="Расскажите о себе, своих навыках и опыте...") }}
+                        {% if user.bio %}{{ form.bio.process_data(user.bio) }}{% endif %}
+                        <div class="char-counter">
+                            <span id="bio-char-count">0</span>/500 символов
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.document.label(class="form-label") }}
+                        <div class="file-upload-area">
+                            {{ form.document(class="file-input", id="document-upload") }}
+                            <label for="document-upload" class="file-upload-label">
+                                <span class="material-icons">cloud_upload</span>
+                                <span class="file-upload-text">
+                                    {% if user.document_filepath %}
+                                    Заменить файл
+                                    {% else %}
+                                    Загрузить {% if user.role_id == 1 %}вакансию{% else %}резюме{% endif %}
+                                    {% endif %}
+                                </span>
+                                <span class="file-types">PDF, DOCX, TXT</span>
+                            </label>
+                            {% if user.document_filepath %}
+                            <div class="current-file">
+                                <span class="material-icons">description</span>
+                                Текущий файл: {{ user.document_filepath }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {{ form.submit(class="btn btn-primary btn-save") }}
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="share-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>Поделиться профилем</h3>
+        <div class="share-input-group">
+            <input type="text" id="profile-link" readonly value="{{ profile_url }}">
+            <button class="btn btn-primary copy-btn" onclick="copyToClipboard()">
+                <span class="material-icons">content_copy</span>
+            </button>
+        </div>
+        <p class="share-success" id="share-success" style="display: none;">
+            <span class="material-icons">check_circle</span>
+            Ссылка скопирована в буфер обмена!
+        </p>
     </div>
 </div>
 {% endblock %}
@@ -153,8 +242,73 @@
 {% block js %}
 <script>
 // Auto-submit avatar form when file is selected
-document.getElementById('avatar').addEventListener('change', function() {
+document.getElementById('avatar')?.addEventListener('change', function() {
     this.form.submit();
+});
+
+// Character counter for bio textarea
+const bioTextarea = document.querySelector('.form-textarea');
+const charCounter = document.getElementById('bio-char-count');
+
+if (bioTextarea && charCounter) {
+    charCounter.textContent = bioTextarea.value.length;
+    bioTextarea.addEventListener('input', function() {
+        charCounter.textContent = this.value.length;
+        if (this.value.length > 450) {
+            charCounter.style.color = '#dc2626';
+        } else {
+            charCounter.style.color = '#6b7280';
+        }
+    });
+}
+
+// File upload styling
+const fileInput = document.getElementById('document-upload');
+if (fileInput) {
+    fileInput.addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name;
+        if (fileName) {
+            const label = document.querySelector('.file-upload-text');
+            label.textContent = fileName;
+        }
+    });
+}
+
+// Share functionality
+function copyProfileLink() {
+    const modal = document.getElementById('share-modal');
+    modal.style.display = 'block';
+}
+
+function copyToClipboard() {
+    const input = document.getElementById('profile-link');
+    input.select();
+    input.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    
+    const success = document.getElementById('share-success');
+    success.style.display = 'block';
+    
+    setTimeout(() => {
+        success.style.display = 'none';
+    }, 3000);
+}
+
+// Modal functionality
+document.querySelector('.close-modal')?.addEventListener('click', function() {
+    document.getElementById('share-modal').style.display = 'none';
+});
+
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('share-modal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+
+// Auto-select text on input focus
+document.getElementById('profile-link')?.addEventListener('focus', function() {
+    this.select();
 });
 </script>
 {% endblock %}

@@ -70,7 +70,7 @@ class Evaluator:
 
         :param filename: Name of file (PDF, DOCX and TXT are supported)
 
-        :return: List of job requirements (first element of the list will contain vacation name)
+        :return: Evaluator with loaded `job_requirements`
         """
 
         evaluator = cls([])
