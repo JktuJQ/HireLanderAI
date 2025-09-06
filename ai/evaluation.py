@@ -19,7 +19,8 @@ class Evaluator:
 
         self.extractor_model = contextgem.DocumentLLM(
             model="mistral/codestral-2508",
-            api_key=SECRETS["OPENAI_API_KEY"]
+            api_key=SECRETS["EVALUATOR_MODEL_API_KEY"],
+            output_language="adapt",
         )
 
     @staticmethod
@@ -69,7 +70,7 @@ class Evaluator:
 
         :param filename: Name of file (PDF, DOCX and TXT are supported)
 
-        :return: List of job requirements (first element of the list will contain vacation name)
+        :return: Evaluator with loaded `job_requirements`
         """
 
         evaluator = cls([])
@@ -77,39 +78,40 @@ class Evaluator:
         document = Evaluator.__file_to_document(filename)
         document.add_aspects([
             contextgem.Aspect(
-                name="Vacancy Title",
-                description=("Extract ONLY the job title/position name. Look for: "
-                             "2) Bold headers indicating position, "
-                             "3) Main job title (not company name). "
-                             "Return only the position name, nothing else. "),
+                name="Название вакансии",
+                description=("Извлеките ТОЛЬКО название должности/позиции. Ищите: "
+                 "1) Текст после поля 'Название' или 'Позиция', "
+                 "2) Заголовки, выделенные жирным шрифтом, указывающие на позицию, "
+                 "3) Основное название должности (не название компании). "
+                 "Верните только название позиции, больше ничего."),
                 reference_depth="sentences",
                 add_justifications=False,
             ),
 
             contextgem.Aspect(
-                name="Job Requirements Detail",
-                description="All specific requirements for the candidate. "
-                            "Focus on: education level, technical skills, experience, responsibilities.",
+                name="Детальные требования к кандидату",
+                description=("Все конкретные требования к кандидату. "
+                "Сосредоточьтесь на: уровне образования, технических навыках, опыте работы и обязанностях."),
                 reference_depth="sentences",
                 add_justifications=True,
                 justification_depth="balanced",
                 concepts=[
                     contextgem.StringConcept(
-                        name="Education Level",
-                        description="Required education: высшее, среднее специальное, среднее профессиональное, etc."
+                        name="Уровень образования",
+                        description=("Требуемое образование: высшее, среднее специальное, среднее профессиональное и т.д.")
                     ),
                     contextgem.StringConcept(
-                        name="Technical Stack",
-                        description=("Specific technologies, programming languages, software, equipment mentioned. "
-                                     "Include: servers, network equipment, programming languages, databases, OS.")
+                    name="Технический стек",
+                    description=("Конкретные технологии, языки программирования, программное обеспечение и оборудование. "
+                                "Включите: серверы, сетевое оборудование, языки программирования, базы данных, ОС.")
                     ),
                     contextgem.StringConcept(
-                        name="Core Responsibilities",
-                        description="Main job duties and tasks the employee must perform."
+                        name="Ключевые обязанности",
+                        description="Главные должностные обязанности и задачи, которые должен выполнять сотрудник."
                     ),
                     contextgem.StringConcept(
-                        name="Required Skills",
-                        description="Soft skills and general abilities: communication, teamwork, thinking, etc."
+                        name="Требуемые навыки",
+                        description="Гибкие навыки и общие способности: коммуникация, работа в команде, аналитическое мышление и т.д."
                     )
                 ]
             )
@@ -157,7 +159,7 @@ class Evaluator:
 
         full_document.add_concepts([
             contextgem.RatingConcept(
-                name="Job applicant rating",
+                name="Overall Vacancy Fit Assessment",
                 description=(
                     "Оцените кандидата по каждому критерию отдельно по шкале 1-100.\n"
                     "ВАЖНО: Дайте отдельную оценку для КАЖДОГО из перечисленных критериев.\n\n"
@@ -169,7 +171,8 @@ class Evaluator:
                     "• 50-69: Частично соответствует, есть потенциал\n"
                     "• 30-49: Слабое соответствие\n"
                     "• 1-29: Не соответствует требованиям\n\n"
-                    "Для КАЖДОГО критерия укажите конкретные факты из резюме/интервью."
+                    "Для КАЖДОГО критерия укажите конкретные факты из резюме/интервью и\n"
+                    "ВАЖНО: указать в обосновании почему оценка не выше и не ниже установленной"
                 ),
                 rating_scale=(1, 100),
                 add_justifications=True,

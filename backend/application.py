@@ -23,7 +23,7 @@ application.secret_key = FLASK_SECRET_KEY
 application.debug = DEBUG
 
 # File upload
-application.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
+application.config["UPLOAD_FOLDER"] = os.path.join(os.getcwd(), "frontend", "static", "uploads")
 application.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 # DB configuration

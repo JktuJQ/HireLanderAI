@@ -36,12 +36,6 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{url_for('dashboard_route')}}" class="nav-link {% if request.endpoint == 'dashboard_route' %}active{% endif %}">
-                    <span class="material-icons">dashboard</span>
-                    Дашборд
-                </a>
-            </li>
-            <li class="nav-item">
                 {% if session.get('user_id') %}
                 <a href="{{url_for('profile_route')}}" class="nav-link {% if request.endpoint == 'profile_route' %}active{% endif %}">
                     <span class="material-icons">account_circle</span>

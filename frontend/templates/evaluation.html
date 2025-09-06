@@ -1,95 +1,253 @@
 {% extends "base.html" %}
 
+{% block title %} - Оценка резюме{% endblock %}
+
 {% block css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/evaluation.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="container">
-        <h1 class="page-title">
-            <span class="material-icons">assessment</span>
-            Оценка резюме
-        </h1>
-        <p class="page-subtitle">Загрузите вакансию и резюме для получения развернутой оценки</p>
+<div class="evaluation-container">
+    <div class="evaluation-header">
+        <h1 class="evaluation-title">Оценка резюме под вакансию</h1>
+        <p class="evaluation-subtitle">Загрузите вакансию и резюме для автоматической оценки соответствия</p>
+    </div>
+
+    <div class="evaluation-content">
+        <!-- Vacancy Section -->
+        <div class="section-card">
+            <h2 class="section-title">
+                <span class="material-icons">work</span>
+                Вакансия
+            </h2>
+
+            <div class="file-upload-area">
+                <form method="POST" action="{{ url_for('evaluation_route') }}" enctype="multipart/form-data" id="vacancy-form">
+                    {{ vacancy_form.hidden_tag() }}
+
+                    <div class="form-group">
+                        {{ vacancy_form.vacancy_file.label(class="form-label") }}
+
+                        {% if current_user_vacancy and session.role_id == 1 %}
+                        <div class="existing-file-option">
+                            <label class="radio-option">
+                                <input type="radio" name="vacancy_source" value="existing" id="use-existing-vacancy">
+                                <span class="radio-custom"></span>
+                                Использовать мою вакансию: {{ current_user_vacancy }}
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="vacancy_source" value="new" checked id="upload-new-vacancy">
+                                <span class="radio-custom"></span>
+                                Загрузить новую вакансию
+                            </label>
+                        </div>
+                        {% endif %}
+
+                        <div class="file-input-area" id="vacancy-upload-area">
+                            {{ vacancy_form.vacancy_file(class="file-input", id="vacancy-file") }}
+                            <label for="vacancy-file" class="file-upload-label">
+                                <span class="material-icons">cloud_upload</span>
+                                <span class="file-upload-text">Выберите файл вакансии</span>
+                                <span class="file-types">PDF, DOCX, TXT</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" name="action" value="process_vacancy" class="btn btn-primary process-btn">
+                        <span class="material-icons">auto_awesome</span>
+                        Обработать вакансию
+                    </button>
+                </form>
+            </div>
+
+            {% if vacancy_requirements %}
+            <div class="results-section">
+                <h3 class="results-title">Требования вакансии</h3>
+                <div class="requirements-list">
+                    {% for requirement in vacancy_requirements %}
+                    <div class="requirement-item">
+                        <span class="requirement-text">{{ requirement }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Resume Section -->
+        <div class="section-card">
+            <h2 class="section-title">
+                <span class="material-icons">description</span>
+                Резюме
+            </h2>
+
+            <div class="file-upload-area">
+                <form method="POST" action="{{ url_for('evaluation_route') }}" enctype="multipart/form-data" id="resume-form">
+                    {{ resume_form.hidden_tag() }}
+
+                    <div class="form-group">
+                        {{ resume_form.resume_file.label(class="form-label") }}
+
+                        {% if current_user_resume and session.role_id == 2 %}
+                        <div class="existing-file-option">
+                            <label class="radio-option">
+                                <input type="radio" name="resume_source" value="existing" id="use-existing-resume">
+                                <span class="radio-custom"></span>
+                                Использовать моё резюме: {{ current_user_resume }}
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="resume_source" value="new" checked id="upload-new-resume">
+                                <span class="radio-custom"></span>
+                                Загрузить новое резюме
+                            </label>
+                        </div>
+                        {% endif %}
+
+                        <div class="file-input-area" id="resume-upload-area">
+                            {{ resume_form.resume_file(class="file-input", id="resume-file") }}
+                            <label for="resume-file" class="file-upload-label">
+                                <span class="material-icons">cloud_upload</span>
+                                <span class="file-upload-text">Выберите файл резюме</span>
+                                <span class="file-types">PDF, DOCX, TXT</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" name="action" value="process_resume"
+                            class="btn btn-primary process-btn"
+                            {% if not vacancy_requirements %}disabled{% endif %}>
+                        <span class="material-icons">analytics</span>
+                        Оценить резюме
+                    </button>
+                </form>
+            </div>
+
+            {% if evaluation_results %}
+            <div class="results-section">
+                <h3 class="results-title">Результаты оценки</h3>
+                <div class="evaluation-results">
+                    {% for requirement, (score, justification) in evaluation_results.items() %}
+                    <div class="evaluation-item">
+                        <div class="requirement-header">
+                            <span class="requirement-text">{{ requirement }}</span>
+                            <span class="score-badge score-{{ (score // 20) + 1 }}">
+                                {{ score }}/100
+                            </span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ score }}%"></div>
+                        </div>
+                        <div class="justification">
+                            <strong>Обоснование:</strong> {{ justification }}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    {% if average_score is not none %}
+                    <div class="summary">
+                        <h4>Общий результат: {{ average_score }}/100</h4>
+                        <p class="summary-text">{{ summary_text }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 
-<div class="evaluation-container">
-    <div class="upload-section">
-        <div class="upload-card">
-            <div class="upload-header">
-                <span class="material-icons">work</span>
-                <h3>Вакансия</h3>
-            </div>
-            <div class="upload-area" id="vacancyUpload">
-                <div class="upload-content">
-                    <span class="material-icons upload-icon">cloud_upload</span>
-                    <p class="upload-text">Перенесите файл вакансии сюда или выберите его вручную</p>
-                    <p class="upload-hint">Поддерживаются PDF и DOCX файлы</p>
-                </div>
-                <input type="file" id="vacancyFile" accept=".pdf,,.docx" hidden>
-            </div>
-            <div class="file-info" id="vacancyInfo" style="display: none;">
-                <span class="material-icons">description</span>
-                <span class="file-name"></span>
-                <button class="remove-file" onclick="removeFile('vacancy')">
-                    <span class="material-icons">close</span>
-                </button>
-            </div>
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h3 id="loading-title">Обработка...</h3>
+        <p id="loading-text">Пожалуйста, подождите</p>
+        <div class="loading-time">
+            <span class="material-icons">schedule</span>
+            Примерное время: <span id="loading-time">15</span> сек
         </div>
-
-        <div class="upload-card">
-            <div class="upload-header">
-                <span class="material-icons">people</span>
-                <h3>Резюме</h3>
-            </div>
-            <div class="upload-area" id="cvUpload">
-                <div class="upload-content">
-                    <span class="material-icons upload-icon">cloud_upload</span>
-                    <p class="upload-text">Перенесите файлы резюме сюда или выберите их вручную</p>
-                    <p class="upload-hint">Поддерживаются PDF и DOCX файлы</p>
-                </div>
-                <input type="file" id="cvFiles" accept=".pdf,,.docx" multiple hidden>
-            </div>
-            <div class="files-list" id="cvFilesList"></div>
-        </div>
-    </div>
-
-    <div class="action-section">
-        <button id="evaluateBtn" class="btn btn-primary btn-large" disabled>
-            <span class="material-icons">psychology</span>
-            Начать оценку
-        </button>
-    </div>
-
-    <div id="loadingSection" class="loading-section" style="display: none;">
-        <div class="loading-animation">
-            <div class="loading-spinner"></div>
-            <h3>Анализ...</h3>
-            <p>Наш ИИ обрабатывает резюме и готовит развернутые оценки</p>
-            <div class="loading-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <span class="progress-text" id="progressText">0%</span>
-            </div>
-        </div>
-    </div>
-
-    <div id="resultsSection" class="results-section" style="display: none;">
-        <div class="results-header">
-            <h2>
-                <span class="material-icons">leaderboard</span>
-                Результаты:
-            </h2>
-            <p>Оценка резюме на основе соответствия требованиям вакансии:</p>
-        </div>
-        <div id="resultsContainer" class="results-container"></div>
     </div>
 </div>
 {% endblock %}
 
 {% block js %}
-<script src="{{ url_for('static', filename='js/evaluation.js') }}"></script>
+<script>
+// File upload handling
+document.querySelectorAll('.file-input').forEach(input => {
+    input.addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name;
+        if (fileName) {
+            const label = this.closest('.file-input-area').querySelector('.file-upload-text');
+            label.textContent = fileName;
+        }
+    });
+});
+
+// Radio button handling for existing files
+document.querySelectorAll('input[name="vacancy_source"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const uploadArea = document.getElementById('vacancy-upload-area');
+        if (this.value === 'existing') {
+            uploadArea.style.opacity = '0.5';
+            uploadArea.style.pointerEvents = 'none';
+        } else {
+            uploadArea.style.opacity = '1';
+            uploadArea.style.pointerEvents = 'auto';
+        }
+    });
+});
+
+document.querySelectorAll('input[name="resume_source"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const uploadArea = document.getElementById('resume-upload-area');
+        if (this.value === 'existing') {
+            uploadArea.style.opacity = '0.5';
+            uploadArea.style.pointerEvents = 'none';
+        } else {
+            uploadArea.style.opacity = '1';
+            uploadArea.style.pointerEvents = 'auto';
+        }
+    });
+});
+
+// Form submission with loading overlay
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        const action = this.querySelector('button[type="submit"]').value;
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingTitle = document.getElementById('loading-title');
+        const loadingText = document.getElementById('loading-text');
+        const loadingTime = document.getElementById('loading-time');
+
+        if (action === 'process_vacancy') {
+            loadingTitle.textContent = 'Анализируем вакансию';
+            loadingText.textContent = 'Извлекаем требования и критерии...';
+            loadingTime.textContent = '15';
+        } else if (action === 'process_resume') {
+            loadingTitle.textContent = 'Оцениваем резюме';
+            loadingText.textContent = 'Сравниваем с требованиями вакансии...';
+            loadingTime.textContent = '5';
+        }
+
+        loadingOverlay.style.display = 'flex';
+
+        // Simulate processing time update
+        let timeLeft = parseInt(loadingTime.textContent);
+        const countdown = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                loadingTime.textContent = 'Завершаем...';
+            } else {
+                loadingTime.textContent = timeLeft;
+            }
+        }, 1000);
+    });
+});
+
+// Close loading overlay when page loads (if it was left open)
+window.addEventListener('load', function() {
+    document.getElementById('loading-overlay').style.display = 'none';
+});
+</script>
 {% endblock %}
