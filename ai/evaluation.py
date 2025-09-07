@@ -186,6 +186,10 @@ class Evaluator:
             evaluation[job_requirement] = (grade.value, grade.justification)
         return evaluation
 
+if __name__ == "__main__":
+    ev = Evaluator
+    print(ev.from_vacancy_file("Образец резюме 2 Бизнес аналитик.pdf"))
+
     def generate_questions(self, criteria):
         """Generates questions for the interview based on the job description"""
 
