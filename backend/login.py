@@ -36,7 +36,7 @@ async def login_route():
             session["telegram"] = user.telegram
 
             flash("Вход выполнен успешно!", "success")
-            return redirect(url_for("index_route"))
+            return redirect(url_for("profile_route"))
         else:
             flash("Неверный логин или пароль", "error")
 
@@ -46,5 +46,5 @@ async def login_route():
 @application.route("/logout", methods=["GET"])
 def logout_route():
     session.clear()
-    flash('Вы вышли из системы', 'success')
+    flash("Вы вышли из системы", "success")
     return redirect(url_for("login_route"))
