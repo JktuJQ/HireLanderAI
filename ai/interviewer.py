@@ -27,7 +27,7 @@ class Interviewer:
 
     @staticmethod
     def text_to_speech_online(text):
-        """Converts speech to text in Russian"""
+        """Converts text to speech in Russian"""
         tts = gTTS(text=text, lang='ru')
         fp = io.BytesIO()
         tts.write_to_fp(fp)
