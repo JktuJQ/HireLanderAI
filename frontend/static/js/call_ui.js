@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", (event)=>{
         window.location.replace("/");
     });
 
-    document.getElementById("room_link").innerHTML=`or the link: <span class="heading-mark">${window.location.href}</span>`;
+    // document.getElementById("room_link").innerHTML=`or the link: <span class="heading-mark">${window.location.href}</span>`;
 
 });
 
@@ -30,18 +30,28 @@ function makeVideoElement(element_id, display_name)
     let vid_wrapper = document.createElement("div");
     let vid = document.createElement("video");
     let name_text = document.createElement("div");
+    let video_overlay = document.createElement("div");
+    let participant_label = document.createElement("span");
 
-    wrapper_div.id = "div_"+element_id;
+    wrapper_div.id = "div_"+element_id +" video-container";
     vid.id = "vid_"+element_id;
 
     wrapper_div.className = "shadow video-item";
-    vid_wrapper.className = "vid-wrapper";
+    vid_wrapper.className = "video-wrapper";
     name_text.className = "display-name";
     
     vid.autoplay = true;        
     name_text.innerText = display_name;
 
+
+    video_overlay.className = "video-overlay";
+    participant_label.className = "participant-label";
+    participant_label.innerText = display_name;
+    
+    
+    video_overlay.appendChild(participant_label)
     vid_wrapper.appendChild(vid);
+    vid_wrapper.appendChild(video_overlay);
     wrapper_div.appendChild(vid_wrapper);
     wrapper_div.appendChild(name_text);
 

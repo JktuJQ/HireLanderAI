@@ -108,7 +108,7 @@
 }
 
 .btn-outline:hover {
-    background: rgba(255, 255, 255, 0.25);
+    /* background: rgba(255, 255, 255, 0.25); */
     border-color: rgba(255, 255, 255, 0.5);
     transform: translateY(-3px) scale(1.05);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);

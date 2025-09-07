@@ -1,5 +1,5 @@
 .navbar {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background: white;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
     padding: 0;
     position: sticky;
@@ -15,6 +15,10 @@
     height: 70px;
 }
 
+.heading {
+    text-align: center;
+}
+
 .nav-brand {
     display: flex;
     align-items: center;
@@ -28,11 +32,12 @@
 
 .nav-brand .material-icons {
     font-size: 2rem;
-    color: #4ade80;
+    color: #3b82f6;
+    /* margin-top: 0.1rem; */
 }
 
 .brand-text {
-    background: linear-gradient(45deg, #ffffff, #e0e7ff);
+    background: #1f2937;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -54,7 +59,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: white;
+    color: #1f2937;
     text-decoration: none;
     padding: 12px 20px;
     border-radius: 25px;
@@ -98,6 +103,11 @@
 .main-content {
     flex: 1;
     padding: 0;
+}
+
+#local_vid {
+    aspect-ratio: 16/9;
+    width: 100%;
 }
 
 /* Responsive Design */

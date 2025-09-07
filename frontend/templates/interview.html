@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="interview-header">
+{# <div class="interview-header">
     <div class="interview-info">
         <h1>Интервью</h1>
         <div class="room-details">
@@ -17,11 +17,11 @@
         <span class="material-icons">Время</span>
         <span id="timerDisplay">00:00:00</span>
     </div>
-</div>
+</div> #}
 
 <div class="interview-layout">
     <div class="video-section">
-        <div class="video-grid">
+        <div id="video_grid" class="video-grid">
             <div class="video-container interviewer">
                 <div class="video-wrapper">
                     <video id="interviewer_vid" autoplay muted></video>
@@ -74,7 +74,7 @@
             <div class="coding-controls">
                 <select id="languageSelect" class="language-select">
                     <option value="python">Python</option>
-                    <option value="cpp">C++</option>
+                    <option value="c_cpp">C++</option>
                 </select>
                 <button id="runCode" class="btn btn-small">
                     <span class="material-icons">play_arrow</span>
@@ -83,19 +83,19 @@
             </div>
         </div>
         <div class="code-editor-container">
-            <textarea id="code-editor" placeholder="# Start typing your code here...
-def solution():
+<div id="code-editor">def solution():
     print('Hello world')
-"></textarea>
+</div>
         </div>
-        <div class="code-output">
+        {# <div class="code-output">
             <div class="output-header">
                 <span class="material-icons">terminal</span>
                 Вывод:
             </div>
-        </div>
+        </div> #}
     </div>
 </div>
+
 
 <div id="connectionStatus" class="connection-status">
     <span class="material-icons">wifi</span>
@@ -104,11 +104,17 @@ def solution():
 {% endblock %}
 
 {% block js %}
+<script src="https://www.unpkg.com/ace-builds@latest/src-noconflict/ace.js"></script>
+<script src="https://www.unpkg.com/ace-builds@latest/src-noconflict/ext-language_tools.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.0/socket.io.js" integrity="sha512-+sXUwEYakGznuXubXLO/7LWSAPcm+U3NxMJaSu3S5OcvruAAAzaC50Uh4TW9KWj0hA6vfPAjB7E1uuIXgn9vmQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script type="text/javascript">
     var myRoomID = "{{interview_room or 'НЕИЗВЕСТНО'}}";
     var myName = "{{display_name or 'Участник'}}";
     var audioMuted = {{mute_audio or 'false'}};
     var videoMuted = {{mute_video or 'false'}};
 </script>
-<script src="{{ url_for('static', filename='js/interview.js') }}"></script>
+<script src="{{ url_for('static', filename='js/call_ui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/call_networking.js') }}"></script>
+<script src="{{ url_for('static', filename='js/livecoding.js') }}"></script>
 {% endblock %}

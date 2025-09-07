@@ -13,4 +13,6 @@ from backend.interview import interview_route
 from backend.evaluation import evaluation_route
 from backend.dashboard import dashboard_route
 
+from backend.checkpoint import checkpoint_route
+
 run()

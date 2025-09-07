@@ -1,6 +1,17 @@
 document.addEventListener("DOMContentLoaded", function() {
-    const editor = document.getElementById("code-editor");
     const status = document.getElementById("status");
+    const language_select = document.getElementById("languageSelect");
+
+    const editor = ace.edit("code-editor", {
+      enableBasicAutocompletion: true,
+      enableLiveAutocompletion: true,
+      mode: `ace/mode/${language_select.value}`
+    });
+    editor.setTheme("ace/theme/chrome")
+
+    language_select.addEventListener("change", function() {
+        editor.session.setMode(`ace/mode/${language_select.value}`);
+    })
 
     socket.on("disconnect", function() {
         status.textContent = "Disconnected from server";

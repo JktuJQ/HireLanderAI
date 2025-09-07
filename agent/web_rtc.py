@@ -5,7 +5,7 @@ from socketio import AsyncClient
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration, MediaStreamTrack
 import cv2
 import time
-from PIL import Image
+
 
 # from ai.proctoring import Proctor
 # proctor = Proctor()
@@ -101,7 +101,6 @@ class P2PConnection:
         })
 
     async def answer(self, offer):
-        # TODO: if this is not needed, this function is the same as `offer`. UPD: This is needed but it might be a good idea to make one offer_answer function
         await self.set_remote_description(offer)  
 
         answer = await self.connection.createAnswer()
