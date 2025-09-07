@@ -193,27 +193,38 @@ class Evaluator:
         job_title = criteria[0].strip()
         blocks = criteria[1:]
 
-        parts = [f"Должность: {job_title}", "", "Критерии (детально):"]
+        full_document = [f"Должность: {job_title}", "", "Критерии (детально):"]
         for i, p in enumerate(blocks, start=1):
-            parts.append(f"{i}. {p}")
-            parts.append("")
-        promt = ("Сгенерируй спискок вопросов для собеседования по данной должности.\n"
-            "Тебе дано название должности и список критериев, которые сгенерировала прошлая LLM в формате:\n"
-            "-сам критерий\n"
-            "-причины, почему прошлая LLM выбрала этот критерий, исходя из описания вакансии\n"
-            "-ссылка на текст описания вакансии"
-            "Формат ответа (пример):\n"
+            full_document.append(f"{i}. {p}")
+            full_document.append("")
+        promt = """Сгенерируй спискок вопросов для собеседования по данной должности.\n
+            Тебе дано название должности и список критериев, которые сгенерировала прошлая LLM в формате:\n
+            -сам критерий\n
+            -причины, почему прошлая LLM выбрала этот критерий, исходя из описания вакансии\n
+            -ссылка на текст описания вакансии
+            Формат ответа (пример):\n
 
-            '      "критерий": "<текст критерия из входа>",\n'
-            '      "вопрос": "<вопрос для кандидата>",\n'
-            '      "тип": "<behavioral|technical|education|culture|other>",\n'
-            '      "сложность": "<easy|medium|hard>",\n'
-            '      "follow_ups": ["<вопрос 1>", "<вопрос 2>"]\n'
+            '      критерий: <текст критерия из входа>,\n'
+            '      вопрос: <вопрос для кандидата>,\n'
+            '      тип: <behavioral|technical|education|culture|other>,\n'
+            '      сложность: <easy|medium|hard>,\n'
+            '      follow_ups: [<вопрос 1>, <вопрос 2>]\n'
 
 
-            "Требование: для каждого критерия сгенерировать 2-4 релевантных вопроса, "
-            "включая как поведенческие (попросить конкретный кейс), так и проверочные/технические вопросы.")
-        doc_text = "\n".join(parts)
-        print(doc_text)
+            Требование: для каждого критерия сгенерировать 2-4 релевантных вопроса, 
+            включая как поведенческие (попросить конкретный кейс), так и проверочные/технические вопросы."""
 
+        full_document = contextgem.Document(raw_text="\n\n".join(full_document))
+        full_document.add_concepts([
+            contextgem.StringConcept(
+                name="Generating Questions for an Interview",
+                description=promt
+            )
+        ])
+
+        grades = self.extractor_model.extract_concepts_from_document(full_document)[0]
+        res = []
+        for item in grades.extracted_items:
+            res.append(item.value)
+        return res
 
