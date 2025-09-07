@@ -16,7 +16,6 @@ class Evaluator:
 
     def __init__(self, job_requirements: list[str]):
         self.job_requirements = job_requirements
-
         self.extractor_model = contextgem.DocumentLLM(
             model="mistral/codestral-2508",
             api_key=SECRETS["EVALUATOR_MODEL_API_KEY"],
@@ -38,7 +37,7 @@ class Evaluator:
             text.append(f"--- Название файла: {pdf_file[:-4]} ---")
             for num, page in enumerate(f.pages()):
                 text.append(f"--- Страница №{num + 1} ---")
-                text.append(page.getText())
+                text.append(page.get_text())
         return "\n".join(text)
 
     @staticmethod
@@ -186,3 +185,35 @@ class Evaluator:
         for job_requirement, grade in zip(self.job_requirements, grades.extracted_items):
             evaluation[job_requirement] = (grade.value, grade.justification)
         return evaluation
+
+    #TODO: finish this ASAP!!!!!!
+    def generate_questions(self, criteria):
+        """Generates questions for the interview based on the job description"""
+
+        job_title = criteria[0].strip()
+        blocks = criteria[1:]
+
+        parts = [f"Должность: {job_title}", "", "Критерии (детально):"]
+        for i, p in enumerate(blocks, start=1):
+            parts.append(f"{i}. {p}")
+            parts.append("")
+        promt = ("Сгенерируй спискок вопросов для собеседования по данной должности.\n"
+            "Тебе дано название должности и список критериев, которые сгенерировала прошлая LLM в формате:\n"
+            "-сам критерий\n"
+            "-причины, почему прошлая LLM выбрала этот критерий, исходя из описания вакансии\n"
+            "-ссылка на текст описания вакансии"
+            "Формат ответа (пример):\n"
+
+            '      "критерий": "<текст критерия из входа>",\n'
+            '      "вопрос": "<вопрос для кандидата>",\n'
+            '      "тип": "<behavioral|technical|education|culture|other>",\n'
+            '      "сложность": "<easy|medium|hard>",\n'
+            '      "follow_ups": ["<вопрос 1>", "<вопрос 2>"]\n'
+
+
+            "Требование: для каждого критерия сгенерировать 2-4 релевантных вопроса, "
+            "включая как поведенческие (попросить конкретный кейс), так и проверочные/технические вопросы.")
+        doc_text = "\n".join(parts)
+        print(doc_text)
+
+
