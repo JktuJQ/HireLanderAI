@@ -1,9 +1,12 @@
 from globals import *
 from gtts import gTTS
-import pygame
+# import pygame
 import io
 from RealtimeSTT import AudioToTextRecorder
 import threading
+
+from mistralai import Mistral
+import os
 
 
 class Interviewer:
@@ -46,8 +49,55 @@ class Interviewer:
         return fp.getvalue()
 
     # Still need to think about the API, but it seems that realtimedness complicates things a LOT.
-    def process_text(text):
-        print(text)
+    @staticmethod
+    def process_text(question, answer, previous=None):
+        api_key = ""
+        model = "mistral-large-latest"
+
+        client = Mistral(api_key=api_key)
+
+        chat_response = client.chat.complete(
+            model=model,
+            messages=[
+                {
+                    "role": "user",
+                    "content":
+                        f"""Ты – виртуальный рекрутер, проводящий онлайн-собеседование. Тебе на вход подаётся:\n
+                        Вопрос в формате:\n
+                        '      критерий: <текст критерия из входа>,\n'
+                        '      вопрос: <вопрос для кандидата>,\n'
+                        '      тип: <behavioral|technical|education|culture|other>,\n'
+                        '      сложность: <easy|medium|hard>,\n'
+                        '      follow_ups: [<вопрос 1>, <вопрос 2>]\n'
+                        сам вопрос: {question}\n
+                        ответ кандидата: {answer}\n
+                        предыдущий диалог: {previous}\n
+                        
+                        Твоя задача:\n
+                        Оценить ответ кандидата:\n                        
+                        Проверить, насколько он соответствует критерию.\n                        
+                        Отметить, если информация слишком общая, неполная или не соответствует ожиданиям.\n                        
+                        Продолжить диалог:\n                        
+                        Если ответ требует уточнения или углубления — задай один дополнительный вопрос:\n                        
+                        либо выбери подходящий из списка follow_ups,\n                        
+                        либо придумай свой релевантный вопрос, если готовые не подходят.\n                        
+                        Старайся поддерживать вежливый и профессиональный тон.\n                        
+                        Завершить обсуждение вопроса:\n
+                        
+                        Если ответ полный и не требует уточнений, или предыдущий диалог слишком долгий, выдай специальный сигнал:\n
+                        [NEXT_QUESTION]\n
+                        
+                        Формат выхода:\n
+
+                        Если нужен дополнительный вопрос → ТОЛЬКО реплика рекрутера (одно-два предложения/вопрос).\n
+                        Твой комментарий или оценка НЕ НУЖНЫ, тебе надо только выдать реплику, которую рекрутер зачитает вслух.\n
+                        
+                        Если переход к следующему вопросу → ровно строка [NEXT_QUESTION].
+                        """,
+                },
+            ]
+        )
+        print(chat_response.choices[0].message.content)
 
 
 class STTProcessor:
@@ -87,3 +137,8 @@ class STTProcessor:
                 self.transcribed = True
                 self.text = text.strip()
                 print(f"Transcribed: {text.strip()}")
+
+if __name__ == "__main__":
+    q = """критерий: высшее техническое или экономическое образование\n тип: education\n сложность: easy\n follow_ups: ["какие курсы или сертификаты вы получали во время учебы?", "как ваше образование связано с работой бизнес аналитика?"]"""
+    ans = "да хрен его знает"
+    Interviewer.process_text(q, ans)
