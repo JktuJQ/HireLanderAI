@@ -38,17 +38,16 @@
                 {% if user.role_id == 1 %}Интервьюер{% else %}Кандидат{% endif %}
             </span>
             
-            <!-- Share Button -->
+            <!-- Share Button and Logout -->
             <div class="profile-actions">
                 {% if is_own_profile %}
                 <button class="btn btn-outline share-btn" onclick="copyProfileLink()">
                     <span class="material-icons">share</span>
                     Поделиться профилем
                 </button>
-                {% else %}
-                <a href="{{ url_for('profile_route') }}" class="btn btn-outline">
-                    <span class="material-icons">person</span>
-                    Мой профиль
+                <a href="{{ url_for('logout_route') }}" class="btn btn-danger logout-btn">
+                    <span class="material-icons">logout</span>
+                    Выйти из аккаунта
                 </a>
                 {% endif %}
             </div>
@@ -108,7 +107,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Document Preview -->
                     {% if user.document_filepath %}
                     <div class="contact-item">
@@ -117,7 +116,7 @@
                             <span class="contact-label">
                                 {% if user.role_id == 1 %}Вакансия{% else %}Резюме{% endif %}
                             </span>
-                            <a href="{{ url_for('static', filename=('uploads/' + ('vacancies/' if user.role_id == 1 else 'cvs/') + user.document_filepath)) }}" 
+                            <a href="{{ url_for('static', filename=('uploads/' + ('vacancies/' if user.role_id == 1 else 'cvs/') + user.document_filepath)) }}"
                                class="file-download" download>
                                 Скачать файл
                             </a>
@@ -148,7 +147,7 @@
                 </h2>
                 <form method="POST" action="{{ url_for('profile_route') }}" enctype="multipart/form-data" class="profile-form">
                     {{ form.hidden_tag() }}
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             {{ form.first_name.label(class="form-label") }}
@@ -163,7 +162,6 @@
                     <div class="form-group">
                         {{ form.telegram.label(class="form-label") }}
                         <div class="input-with-prefix">
-                            <span class="input-prefix">@</span>
                             {{ form.telegram(class="form-input", value=user.telegram or "", placeholder="username") }}
                         </div>
                     </div>
@@ -285,10 +283,10 @@ function copyToClipboard() {
     input.select();
     input.setSelectionRange(0, 99999);
     document.execCommand('copy');
-    
+
     const success = document.getElementById('share-success');
     success.style.display = 'block';
-    
+
     setTimeout(() => {
         success.style.display = 'none';
     }, 3000);
@@ -309,6 +307,13 @@ window.addEventListener('click', function(event) {
 // Auto-select text on input focus
 document.getElementById('profile-link')?.addEventListener('focus', function() {
     this.select();
+});
+
+// Logout confirmation
+document.querySelector('.logout-btn')?.addEventListener('click', function(e) {
+    if (!confirm('Вы уверены, что хотите выйти из аккаунта?')) {
+        e.preventDefault();
+    }
 });
 </script>
 {% endblock %}

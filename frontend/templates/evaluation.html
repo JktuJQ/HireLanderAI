@@ -28,12 +28,12 @@
                     <div class="form-group">
                         {{ vacancy_form.vacancy_file.label(class="form-label") }}
 
-                        {% if current_user_vacancy and session.role_id == 1 %}
+                        {% if user_vacancy and session.role_id == 1 %}
                         <div class="existing-file-option">
                             <label class="radio-option">
                                 <input type="radio" name="vacancy_source" value="existing" id="use-existing-vacancy">
                                 <span class="radio-custom"></span>
-                                Использовать мою вакансию: {{ current_user_vacancy }}
+                                Использовать мою вакансию: {{ user_vacancy }}
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="vacancy_source" value="new" checked id="upload-new-vacancy">
@@ -88,12 +88,12 @@
                     <div class="form-group">
                         {{ resume_form.resume_file.label(class="form-label") }}
 
-                        {% if current_user_resume and session.role_id == 2 %}
+                        {% if user_resume and session.role_id == 2 %}
                         <div class="existing-file-option">
                             <label class="radio-option">
                                 <input type="radio" name="resume_source" value="existing" id="use-existing-resume">
                                 <span class="radio-custom"></span>
-                                Использовать моё резюме: {{ current_user_resume }}
+                                Использовать моё резюме: {{ user_resume }}
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="resume_source" value="new" checked id="upload-new-resume">

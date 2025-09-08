@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Length, Optional, Regexp
+from wtforms.validators import Length, Optional, Regexp
 
 
 class AvatarForm(FlaskForm):
@@ -23,19 +23,17 @@ class AvatarForm(FlaskForm):
 
 class InterviewerProfileForm(FlaskForm):
     last_name = StringField("Фамилия", validators=[
-        DataRequired(message="Фамилия обязательна"),
         Length(max=50, message="Фамилия не должна превышать 50 символов"),
         Optional()
     ])
     first_name = StringField("Имя", validators=[
-        DataRequired(message="Имя обязательно"),
         Length(max=50, message="Имя не должно превышать 50 символов"),
         Optional()
     ])
 
     telegram = StringField("Телеграм", validators=[
-        DataRequired(message="Телеграм обязателен"),
-        Regexp("^@?[A-Za-z0-9_]{5,32}$", message="Неверный формат телеграма")
+        Regexp("^@?[A-Za-z0-9_]{5,32}$", message="Неверный формат телеграма"),
+        Optional(),
     ])
     email = StringField("Email", validators=[
         Length(max=100, message="Email не должен превышать 100 символов"),
@@ -51,8 +49,9 @@ class InterviewerProfileForm(FlaskForm):
         Optional()
     ])
 
-    document = FileField("Вакансия", validators=[
-        FileAllowed(["pdf", "docx", "txt"], "Разрешены только PDF, DOCX и TXT файлы")
+    document = FileField("Документ (Вакансия для интервьюера/Резюме для кандидата)", validators=[
+        FileAllowed(["pdf", "docx", "txt"], "Разрешены только PDF, DOCX и TXT файлы"),
+        Optional()
     ])
 
     submit = SubmitField("Сохранить изменения")
@@ -68,7 +67,7 @@ async def profile_route(user_id=None):
         user_id = session["user_id"]
         is_own_profile = True
     else:
-        is_own_profile = session.get("user_id") == user_id
+        is_own_profile = session["user_id"] == user_id
 
     user = db.session.execute(db.select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
@@ -83,8 +82,8 @@ async def profile_route(user_id=None):
 
     return render_template("profile.html",
                            user=user,
-                           form=form,
                            avatar_form=avatar_form,
+                           form=form,
                            is_own_profile=is_own_profile,
                            profile_url=request.host_url + f"profile/{user_id}")
 

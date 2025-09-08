@@ -1,20 +1,8 @@
-from enum import Enum
-
 import cv2
 import mediapipe as mp
 import numpy as np
 from PIL import Image
 from ultralytics import YOLO
-
-
-class SuspicionLevel(Enum):
-    """Enum that describes proctor concerns about interviewee."""
-
-    NORMAL = 0
-    SLIGHTLY_SUSPICIOUS = 1
-    SUSPICIOUS = 2
-    ALERT = 3
-
 
 class Proctor:
     """
@@ -31,13 +19,13 @@ class Proctor:
     def __init__(self):
         self.model = YOLO('yolo11x.pt')
         self.model_masks = YOLO('models/masks_model.pt')
+        self.ac = AntiCheat()
 
-    def analyze(self, image: Image, timecode: int) -> (SuspicionLevel, str):
+    def analyze(self, image: Image) -> str:
         """
         Analyzes image of the interviewee and detects anomalies of his behaviour.
 
         :param image: Image of the interviewee
-        :param timecode: Timecode of the image
 
         :returns: Current concerns of the proctor - suspicion level and reasoning for it.
         """
@@ -61,30 +49,39 @@ class Proctor:
         mask_detected = results_mask[0].names[int(
             results_mask[0].boxes[0].cls[0])] == "with_mask"
 
-        if people_count == 0:
-            flag = 1
-            print("Нет человека на изображении!")
-        if phone_detected:
-            flag = 1
-            print("Телефон в руках обнаружен!")
-        if people_count > 1:
-            flag = 1
-            print("Много людей в кадре!")
-        if mask_detected:
-            flag = 1
-            print("Попросите снять маску!")
-        if flag == 0:
-            print("Всё в порядке.")
-        return SuspicionLevel.NORMAL, ""
+        # хм
+        gpg = GetPersonsGaze(image)
+        status = gpg.estimate_gaze_from_image()
+        warning = self.ac.step(status=status)
 
+        alarm = ""
+        if warning:
+            flag = 1
+            alarm += "Собеседник смотрит не туда!\n"
+        if people_count == 0:
+            flag = 2
+            alarm += "Нет человека на изображении!\n"
+        if phone_detected:
+            flag = 2
+            alarm += "Телефон в руках обнаружен!\n"
+        if people_count > 1:
+            flag = 2
+            alarm += "Много людей в кадре!\n"
+        if mask_detected:
+            flag = 2
+            alarm += "Попросите снять маску!\n"
+        if flag == 0:
+            alarm += "Всё в порядке."
+        alarm = f"ALARM LEVEL {flag}: " + alarm
+        return alarm
 
 class GetPersonsGaze:
     """
     Gets a person's direction of view using mediapipe
     """
 
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, image):
+        self.image = image
         # модель для обнаружения ключевых точек
         self.face_mesh = mp.solutions.face_mesh.FaceMesh(
             static_image_mode=True,
@@ -149,9 +146,7 @@ class GetPersonsGaze:
 
     def estimate_gaze_from_image(self):
         """Возвращает направление взгляда по фотографии"""
-        img = cv2.imread(self.path)
-        if img is None:
-            raise FileNotFoundError(f"Не удалось открыть {self.path}")
+        img = np.array(self.image)
         h, w = img.shape[:2]
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -191,16 +186,6 @@ class GetPersonsGaze:
             right_strength = max(abs(rdx), abs(rdy))
             final = left_dir if left_strength >= right_strength else right_dir
 
-        # Вернём детальную инфу для отладки
-        # return {
-        #     "final_gaze": final,
-        #     "left": {"dir": left_dir, "dx": float(ldx), "dy": float(ldy)},
-        #     "right": {"dir": right_dir, "dx": float(rdx), "dy": float(rdy)},
-        #     "left_iris_xy": left_iris_xy.tolist(),
-        #     "right_iris_xy": right_iris_xy.tolist(),
-        #     "left_eye_center": left_eye_center.tolist(),
-        #     "right_eye_center": right_eye_center.tolist()
-        # }
         return final
 
 
@@ -231,7 +216,7 @@ class AntiCheat:
         # возвращает первый ключ, значение которого равно most_popular
         return next((k for k, v in states.items() if v == most_popular), None)
 
-    def step(self, status: str) -> None:
+    def step(self, status: str) -> bool:
         self.gazes.append(status)
 
         if 16 <= self.curr_time:
@@ -243,7 +228,16 @@ class AntiCheat:
                 self.long_gaze = self._get_most_popular_state(long_gazes)
                 self.gazes.pop(0)
 
-        if self.long_gaze != self.short_gaze and self.long_gaze != "":
-            print("АЛЯРМА!!!!11!!!1!! ПОДОЗРЕНИЕ НА СПИСЫВАНИЕ!11!!!!111111!!!!!!!адын")
-
         self.curr_time += 1
+
+        if self.long_gaze != self.short_gaze and self.long_gaze != "":
+            return True
+
+        return False
+
+if __name__ == "__main__":
+    proctor = Proctor()
+    img = Image.open("norm.jpeg")
+    print(proctor.analyze(image=img))
+    img = Image.open("two.png")
+    print(proctor.analyze(image=img))

@@ -31,23 +31,23 @@ class ResumeForm(FlaskForm):
 
 @application.route("/evaluation", methods=["GET", "POST"])
 async def evaluation_route():
-    if "user_id" not in session:
-        flash("Пожалуйста, войдите в систему", "error")
-        return redirect(url_for("login_route"))
-
     vacancy_form = VacancyForm()
     resume_form = ResumeForm()
 
-    current_user = db.session.execute(
-        db.select(User).where(User.id == session["user_id"])
-    ).scalar_one()
+    if "user_id" in session:
+        user = db.session.execute(
+            db.select(User).where(User.id == session["user_id"])
+        ).scalar_one()
 
-    current_user_vacancy = current_user.document_filepath if session.get("role_id") == 1 else None
-    current_user_resume = current_user.document_filepath if session.get("role_id") == 2 else None
+        user_vacancy = user.document_filepath if session["role_id"] == 1 else None
+        user_resume = user.document_filepath if session["role_id"] == 2 else None
+    else:
+        user_vacancy = None
+        user_resume = None
 
     vacancy_requirements = session.get("vacancy_requirements", [])
     evaluation_results = session.get("evaluation_results", {})
-    average_score = session.get("average_score")
+    average_score = session.get("average_score", "")
     summary_text = session.get("summary_text", "")
 
     if request.method == "POST":
@@ -56,11 +56,11 @@ async def evaluation_route():
         if action == "process_vacancy":
             vacancy_source = request.form.get("vacancy_source", "new")
 
-            if vacancy_source == "existing" and current_user_vacancy:
+            if vacancy_source == "existing" and "user_id" in session and user_vacancy is not None:
                 vacancy_path = os.path.join(
                     application.config["UPLOAD_FOLDER"],
                     "vacancies",
-                    current_user_vacancy
+                    user_vacancy
                 )
             else:
                 if vacancy_form.vacancy_file.data:
@@ -77,28 +77,22 @@ async def evaluation_route():
             try:
                 evaluator = Evaluator.from_vacancy_file(vacancy_path)
                 vacancy_requirements = evaluator.job_requirements
-
                 session["vacancy_requirements"] = vacancy_requirements
-                session["evaluator"] = evaluator
 
                 flash("Вакансия успешно обработана!", "success")
-
             except Exception as e:
+                print(str(e))
                 flash(f"Ошибка при обработке вакансии: {str(e)}", "error")
                 return redirect(url_for("evaluation_route"))
 
-        elif action == "process_resume" and "evaluator" in session:
-            if not vacancy_requirements:
-                flash("Сначала обработайте вакансию", "error")
-                return redirect(url_for("evaluation_route"))
-
+        elif action == "process_resume" and "vacancy_requirements" in session:
             resume_source = request.form.get("resume_source", "new")
 
-            if resume_source == "existing" and current_user_resume:
+            if resume_source == "existing" and "user_id" in session and user_resume:
                 resume_path = os.path.join(
                     application.config["UPLOAD_FOLDER"],
                     "cvs",
-                    current_user_resume
+                    user_resume
                 )
             else:
                 if resume_form.resume_file.data:
@@ -113,7 +107,7 @@ async def evaluation_route():
                     return redirect(url_for("evaluation_route"))
 
             try:
-                evaluator = session["evaluator"]
+                evaluator = Evaluator(vacancy_requirements)
                 results = evaluator.grade(cv_file=resume_path)
 
                 scores = [score for score, _ in results.values()]
@@ -130,13 +124,22 @@ async def evaluation_route():
                 else:
                     summary_text = "Не соответствует требованиям. Не рекомендуется к найму."
 
-                session["evaluation_results"] = results
+                part_length = len(results) // 4
+                new_dict = {}
+                for i, (key, value) in enumerate(results.items()):
+                    if i < part_length:
+                        new_dict[key] = value
+                    else:
+                        break
+                session["vacancy_requirements"] = [""]
+                session["evaluation_results"] = new_dict
                 session["average_score"] = average_score
                 session["summary_text"] = summary_text
 
+                print("gol")
                 flash("Резюме успешно оценено!", "success")
-
             except Exception as e:
+                print(e)
                 flash(f"Ошибка при оценке резюме: {str(e)}", "error")
                 return redirect(url_for("evaluation_route"))
 
@@ -144,8 +147,8 @@ async def evaluation_route():
         "evaluation.html",
         vacancy_form=vacancy_form,
         resume_form=resume_form,
-        current_user_vacancy=current_user_vacancy,
-        current_user_resume=current_user_resume,
+        user_vacancy=user_vacancy,
+        user_resume=user_resume,
         vacancy_requirements=vacancy_requirements,
         evaluation_results=evaluation_results,
         average_score=average_score,
@@ -155,10 +158,9 @@ async def evaluation_route():
 
 @application.route("/evaluation/clear")
 def clear_evaluation():
-    session.pop("vacancy_requirements", None)
-    session.pop("evaluation_results", None)
-    session.pop("average_score", None)
-    session.pop("summary_text", None)
-    session.pop("evaluator", None)
-    flash("Результаты оценки очищены", "success")
+    session["vacancy_requirements"] = None
+    session["evaluation_results"] = None
+    session["average_score"] = None
+    session["summary_text"] = None
+    session["evaluator"] = None
     return redirect(url_for("evaluation_route"))

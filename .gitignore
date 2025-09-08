@@ -8,9 +8,10 @@ __pycache__
 
 # Project related
 .env
-data
-*.log
 
 # Other
+data
+uploads
+*.log
 .pdf
 .docx
