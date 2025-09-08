@@ -66,7 +66,7 @@ async def evaluation_route():
                 if vacancy_form.vacancy_file.data:
                     file = vacancy_form.vacancy_file.data
                     filename = secure_filename(
-                        f"vacancy_{session['user_id']}_{int(time.time())}.{file.filename.rsplit('.', 1)[1].lower()}")
+                        f"vacancy_{int(time.time())}.{file.filename.rsplit('.', 1)[1].lower()}")
                     vacancy_path = os.path.join(application.config["UPLOAD_FOLDER"], "vacancies", filename)
                     os.makedirs(os.path.dirname(vacancy_path), exist_ok=True)
                     file.save(vacancy_path)
@@ -77,7 +77,10 @@ async def evaluation_route():
             try:
                 evaluator = Evaluator.from_vacancy_file(vacancy_path)
                 vacancy_requirements = evaluator.job_requirements
-                session["vacancy_requirements"] = vacancy_requirements
+                for i in range(len(vacancy_requirements)):
+                    vacancy_requirements[i] = vacancy_requirements[i].split("Причины:")[0].split("Ссылки:")[0]
+                session["vacancy_requirements"] = evaluator.job_requirements
+                vacancy_requirements = evaluator.job_requirements
 
                 flash("Вакансия успешно обработана!", "success")
             except Exception as e:
@@ -98,7 +101,7 @@ async def evaluation_route():
                 if resume_form.resume_file.data:
                     file = resume_form.resume_file.data
                     filename = secure_filename(
-                        f"resume_{session['user_id']}_{int(time.time())}.{file.filename.rsplit('.', 1)[1].lower()}")
+                        f"resume_{int(time.time())}.{file.filename.rsplit('.', 1)[1].lower()}")
                     resume_path = os.path.join(application.config["UPLOAD_FOLDER"], "cvs", filename)
                     os.makedirs(os.path.dirname(resume_path), exist_ok=True)
                     file.save(resume_path)
@@ -108,10 +111,10 @@ async def evaluation_route():
 
             try:
                 evaluator = Evaluator(vacancy_requirements)
-                results = evaluator.grade(cv_file=resume_path)
+                results = {key: value for i, (key, value) in enumerate(evaluator.grade(cv_file=resume_path).items()) if i < 7}
 
                 scores = [score for score, _ in results.values()]
-                average_score = sum(scores) / len(scores) if scores else 0
+                average_score = round(sum(scores) / len(scores) if scores else 0, 2)
 
                 if average_score >= 90:
                     summary_text = "Отличное соответствие! Кандидат полностью подходит для вакансии."
@@ -124,27 +127,19 @@ async def evaluation_route():
                 else:
                     summary_text = "Не соответствует требованиям. Не рекомендуется к найму."
 
-                part_length = len(results) // 4
-                new_dict = {}
-                for i, (key, value) in enumerate(results.items()):
-                    if i < part_length:
-                        new_dict[key] = value
-                    else:
-                        break
-                session["vacancy_requirements"] = [""]
-                session["evaluation_results"] = new_dict
+                session["evaluation_results"] = results
                 session["average_score"] = average_score
                 session["summary_text"] = summary_text
 
-                print("gol")
                 flash("Резюме успешно оценено!", "success")
+                return redirect(url_for("evaluation_route"))
             except Exception as e:
-                print(e)
                 flash(f"Ошибка при оценке резюме: {str(e)}", "error")
                 return redirect(url_for("evaluation_route"))
 
     return render_template(
         "evaluation.html",
+        enumerate=enumerate,
         vacancy_form=vacancy_form,
         resume_form=resume_form,
         user_vacancy=user_vacancy,
@@ -157,10 +152,9 @@ async def evaluation_route():
 
 
 @application.route("/evaluation/clear")
-def clear_evaluation():
+def clear_evaluation_route():
     session["vacancy_requirements"] = None
     session["evaluation_results"] = None
     session["average_score"] = None
     session["summary_text"] = None
-    session["evaluator"] = None
     return redirect(url_for("evaluation_route"))

@@ -79,10 +79,10 @@ class Evaluator:
             contextgem.Aspect(
                 name="Название вакансии",
                 description=("Извлеките ТОЛЬКО название должности/позиции. Ищите: "
-                 "1) Текст после поля 'Название' или 'Позиция', "
-                 "2) Заголовки, выделенные жирным шрифтом, указывающие на позицию, "
-                 "3) Основное название должности (не название компании). "
-                 "Верните только название позиции, больше ничего."),
+                             "1) Текст после поля 'Название' или 'Позиция', "
+                             "2) Заголовки, выделенные жирным шрифтом, указывающие на позицию, "
+                             "3) Основное название должности (не название компании). "
+                             "Верните только название позиции, больше ничего."),
                 reference_depth="sentences",
                 add_justifications=False,
             ),
@@ -90,19 +90,21 @@ class Evaluator:
             contextgem.Aspect(
                 name="Детальные требования к кандидату",
                 description=("Все конкретные требования к кандидату. "
-                "Сосредоточьтесь на: уровне образования, технических навыках, опыте работы и обязанностях."),
+                             "Сосредоточьтесь на: уровне образования, технических навыках, опыте работы и обязанностях."),
                 reference_depth="sentences",
                 add_justifications=True,
                 justification_depth="balanced",
                 concepts=[
                     contextgem.StringConcept(
                         name="Уровень образования",
-                        description=("Требуемое образование: высшее, среднее специальное, среднее профессиональное и т.д.")
+                        description=(
+                            "Требуемое образование: высшее, среднее специальное, среднее профессиональное и т.д.")
                     ),
                     contextgem.StringConcept(
-                    name="Технический стек",
-                    description=("Конкретные технологии, языки программирования, программное обеспечение и оборудование. "
-                                "Включите: серверы, сетевое оборудование, языки программирования, базы данных, ОС.")
+                        name="Технический стек",
+                        description=(
+                            "Конкретные технологии, языки программирования, программное обеспечение и оборудование. "
+                            "Включите: серверы, сетевое оборудование, языки программирования, базы данных, ОС.")
                     ),
                     contextgem.StringConcept(
                         name="Ключевые обязанности",
@@ -153,12 +155,12 @@ class Evaluator:
 
         job_requirements_text = []
         for i, job_requirement in enumerate(self.job_requirements):
-            job_requirements_text.append(f"Requirement №{i + 1}:" + job_requirement)
+            job_requirements_text.append(f"Требование №{i + 1}:" + job_requirement)
         job_requirements_text = "\n".join(job_requirements_text)
 
         full_document.add_concepts([
             contextgem.RatingConcept(
-                name="Overall Vacancy Fit Assessment",
+                name="Оценка соответствия резюме вакансии",
                 description=(
                     "Оцените кандидата по каждому критерию отдельно по шкале 1-100.\n"
                     "ВАЖНО: Дайте отдельную оценку для КАЖДОГО из перечисленных критериев.\n\n"
@@ -226,4 +228,3 @@ class Evaluator:
         for item in grades.extracted_items:
             res.append(item.value)
         return res
-

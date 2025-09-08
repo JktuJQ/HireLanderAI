@@ -11,9 +11,39 @@
     <div class="evaluation-header">
         <h1 class="evaluation-title">Оценка резюме под вакансию</h1>
         <p class="evaluation-subtitle">Загрузите вакансию и резюме для автоматической оценки соответствия</p>
+
+        <!-- Кнопка очистки -->
+        {% if vacancy_requirements or evaluation_results %}
+        <div class="clear-button-container">
+            <a href="{{ url_for('clear_evaluation_route') }}" class="btn btn-danger clear-btn">
+                <span class="material-icons">delete</span>
+                Очистить результаты
+            </a>
+        </div>
+        {% endif %}
     </div>
 
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span class="material-icons">
+                            {% if category == 'success' %}check_circle{% endif %}
+                            {% if category == 'error' %}error{% endif %}
+                            {% if category == 'warning' %}warning{% endif %}
+                            {% if category == 'info' %}info{% endif %}
+                        </span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <div class="evaluation-content">
+        <!-- Остальной код остается без изменений -->
         <!-- Vacancy Section -->
         <div class="section-card">
             <h2 class="section-title">
@@ -64,9 +94,9 @@
             <div class="results-section">
                 <h3 class="results-title">Требования вакансии</h3>
                 <div class="requirements-list">
-                    {% for requirement in vacancy_requirements %}
+                    {% for i, requirement in enumerate(vacancy_requirements) %}
                     <div class="requirement-item">
-                        <span class="requirement-text">{{ requirement }}</span>
+                        <span class="requirement-text">{{ i + 1 }}: {{ requirement }}</span>
                     </div>
                     {% endfor %}
                 </div>
@@ -126,10 +156,10 @@
             <div class="results-section">
                 <h3 class="results-title">Результаты оценки</h3>
                 <div class="evaluation-results">
-                    {% for requirement, (score, justification) in evaluation_results.items() %}
+                    {% for i, (requirement, (score, justification)) in enumerate(evaluation_results.items()) %}
                     <div class="evaluation-item">
                         <div class="requirement-header">
-                            <span class="requirement-text">{{ requirement }}</span>
+                            <span class="requirement-text">{{ i + 1 }}: {{ requirement }}</span>
                             <span class="score-badge score-{{ (score // 20) + 1 }}">
                                 {{ score }}/100
                             </span>
@@ -249,5 +279,14 @@ document.querySelectorAll('form').forEach(form => {
 window.addEventListener('load', function() {
     document.getElementById('loading-overlay').style.display = 'none';
 });
+
+// Auto-hide flash messages after 5 seconds
+setTimeout(function() {
+    const flashMessages = document.querySelectorAll('.alert');
+    flashMessages.forEach(message => {
+        message.style.opacity = '0';
+        setTimeout(() => message.remove(), 300);
+    });
+}, 5000);
 </script>
 {% endblock %}

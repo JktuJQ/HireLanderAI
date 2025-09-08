@@ -408,3 +408,127 @@
         margin: 20px;
     }
 }
+
+/* Добавить в evaluation.css */
+
+/* Flash Messages */
+.flash-messages {
+    margin-bottom: 30px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+    transition: opacity 0.3s ease;
+}
+
+.alert-success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.alert-warning {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.alert-info {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.alert .material-icons {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive for flash messages */
+@media (max-width: 768px) {
+    .flash-messages {
+        margin-bottom: 20px;
+    }
+
+    .alert {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+    }
+
+    .alert .material-icons {
+        font-size: 1.1rem;
+    }
+}
+
+/* Добавить в evaluation.css */
+
+/* Clear Button */
+.clear-button-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.clear-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #dc2626;
+    color: white;
+    border: 2px solid #dc2626;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.clear-btn:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    color: white;
+}
+
+.clear-btn .material-icons {
+    font-size: 1.1rem;
+}
+
+/* Responsive for clear button */
+@media (max-width: 768px) {
+    .clear-button-container {
+        margin-top: 15px;
+    }
+
+    .clear-btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+}
