@@ -51,7 +51,7 @@ class Interviewer:
     # Still need to think about the API, but it seems that realtimedness complicates things a LOT.
     @staticmethod
     def process_text(question, answer, previous=None):
-        api_key = ""
+        api_key = SECRETS["INTERVIEWER_MODEL_API_KEY"]
         model = "mistral-large-latest"
 
         client = Mistral(api_key=api_key)
