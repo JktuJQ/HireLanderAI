@@ -27,8 +27,12 @@ class AudioEchoTrack(MediaStreamTrack):
         self.track = track
         self.resampler = av.AudioResampler(format="s16", layout="mono", rate=16_000)
         self.recorder = STTProcessor()
+        self.response_frames = []
 
     async def recv(self):
+        if self.response_frames:
+            return self.response_frames.pop(0)
+
         try:
             frame = await self.track.recv()
         except MediaStreamError:
@@ -37,6 +41,11 @@ class AudioEchoTrack(MediaStreamTrack):
         resampled = self.resampler.resample(frame)[0]
         audio_data = resampled.to_ndarray().tobytes()
         self.recorder.feed_audio(audio_data)
+
+        if self.recorder.transcribed:
+            self.response_frames = interviewer.text_to_speech_online(self.recorder.text)
+            self.recorder.transcribed = False
+            return self.response_frames.pop(0)
         
         return frame
 

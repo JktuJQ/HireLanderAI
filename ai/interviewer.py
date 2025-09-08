@@ -5,6 +5,7 @@ import threading
 import google.generativeai as genai
 from RealtimeSTT import AudioToTextRecorder
 from gtts import gTTS
+import av
 
 from globals import *
 
@@ -34,19 +35,21 @@ class Interviewer:
     def text_to_speech_online(text: str):
         """Converts text to speech in Russian"""
         tts = gTTS(text=text, lang='ru')
-        fp = io.BytesIO()
-        tts.write_to_fp(fp)
-        fp.seek(0)
+        audio_bytes = io.BytesIO()
+        tts.write_to_fp(audio_bytes)
+        audio_bytes.seek(0)
 
-        # return fp.getvalue()
-
-        # pygame.mixer.init()
-        # pygame.mixer.music.load(fp)
-        # pygame.mixer.music.play()
-        # while pygame.mixer.music.get_busy():
-        #     pygame.time.Clock().tick(10)
-
-        return fp.getvalue()
+        print("Creating frames")
+        with av.open(audio_bytes, format="mp3") as container:
+            audio_stream = container.streams.audio[0]
+            frames = []
+            resampler = av.AudioResampler(format="s16", layout="stereo", rate=48_000)
+            for packet in container.demux(audio_stream):
+                for frame in packet.decode():
+                    resampled = resampler.resample(frame)
+                    frames.extend(resampled)
+        print(f"Got list of frames: {len(frames)}\n{frames}")                    
+        return frames
 
     @staticmethod
     def process_text(question, answer, previous=None):
@@ -103,8 +106,7 @@ class STTProcessor:
     def __init__(self):
         import logging
 
-        logging.getLogger("faster_whisper").setLevel(
-            logging.ERROR)  # Remove annoying debug info of RealtimeSTT
+        logging.getLogger("faster_whisper").setLevel(logging.ERROR)  # Remove annoying debug info of RealtimeSTT
 
         self.recorder_config = {
             "spinner": True,
