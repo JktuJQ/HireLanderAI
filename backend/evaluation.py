@@ -78,7 +78,7 @@ async def evaluation_route():
                 evaluator = Evaluator.from_vacancy_file(vacancy_path)
                 vacancy_requirements = evaluator.job_requirements
                 for i in range(len(vacancy_requirements)):
-                    vacancy_requirements[i] = vacancy_requirements[i].split("Причины:")[0].split("Ссылки:")[0]
+                    vacancy_requirements[i] = vacancy_requirements[i]
                 session["vacancy_requirements"] = evaluator.job_requirements
                 vacancy_requirements = evaluator.job_requirements
 

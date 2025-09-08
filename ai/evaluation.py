@@ -92,8 +92,7 @@ class Evaluator:
                 description=("Все конкретные требования к кандидату. "
                              "Сосредоточьтесь на: уровне образования, технических навыках, опыте работы и обязанностях."),
                 reference_depth="sentences",
-                add_justifications=True,
-                justification_depth="balanced",
+                add_justifications=False,
                 concepts=[
                     contextgem.StringConcept(
                         name="Уровень образования",
@@ -121,14 +120,7 @@ class Evaluator:
         processed_document = evaluator.extractor_model.extract_all(document, max_items_per_call=1)
         evaluator.job_requirements.append(str(processed_document.aspects[0].extracted_items[0].value))
         for job_requirement in processed_document.aspects[1].extracted_items:
-            job_requirement_text = [
-                f"{job_requirement.value}",
-                f"Причины: {job_requirement.justification}",
-                "Ссылки:"
-            ]
-            for sentence in job_requirement.reference_sentences:
-                job_requirement_text.append(f"* {sentence.raw_text} \n")
-            evaluator.job_requirements.append("\n".join(job_requirement_text))
+            evaluator.job_requirements.append(f"{job_requirement.value}")
         return evaluator
 
     def grade(self, cv_file: str = None, conversation: str = None) -> dict[str, (int, str)]:
