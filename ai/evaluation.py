@@ -84,16 +84,12 @@ class Evaluator:
                  "3) Основное название должности (не название компании). "
                  "Верните только название позиции, больше ничего."),
                 reference_depth="sentences",
-                add_justifications=False,
             ),
 
             contextgem.Aspect(
                 name="Детальные требования к кандидату",
                 description=("Все конкретные требования к кандидату. "
                 "Сосредоточьтесь на: уровне образования, технических навыках, опыте работы и обязанностях."),
-                reference_depth="sentences",
-                add_justifications=True,
-                justification_depth="balanced",
                 concepts=[
                     contextgem.StringConcept(
                         name="Уровень образования",
@@ -121,11 +117,7 @@ class Evaluator:
         for job_requirement in processed_document.aspects[1].extracted_items:
             job_requirement_text = [
                 f"{job_requirement.value}",
-                f"Причины: {job_requirement.justification}",
-                "Ссылки:"
             ]
-            for sentence in job_requirement.reference_sentences:
-                job_requirement_text.append(f"* {sentence.raw_text} \n")
             evaluator.job_requirements.append("\n".join(job_requirement_text))
         return evaluator
 
