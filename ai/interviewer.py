@@ -52,7 +52,7 @@ class Interviewer:
         return frames
 
     @staticmethod
-    def process_text(question, answer, previous=None):
+    def process_text(question, answer=None, previous=None):
         api_key = SECRETS["INTERVIEWER_MODEL_API_KEY"]
         model_name = "gemini-2.5-flash-lite"
 
@@ -99,7 +99,7 @@ class Interviewer:
         # вызываем генерацию
         response = model.generate_content(prompt)
 
-        print(response.text)
+        return response
 
 
 class STTProcessor:
