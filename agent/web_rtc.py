@@ -3,12 +3,17 @@ from globals import *
 import aiohttp
 from socketio import AsyncClient
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration, MediaStreamTrack
+from aiortc.mediastreams import MediaStreamError
 import cv2
 import time
+import av
+from ai.interviewer import STTProcessor, Interviewer
+from ai.proctoring import Proctor
+from PIL import Image
+import asyncio
 
-
-# from ai.proctoring import Proctor
 # proctor = Proctor()
+interviewer = Interviewer()
 
 
 class AudioEchoTrack(MediaStreamTrack):
@@ -20,10 +25,19 @@ class AudioEchoTrack(MediaStreamTrack):
     def __init__(self, track):
         super().__init__()
         self.track = track
+        self.resampler = av.AudioResampler(format="s16", layout="mono", rate=16_000)
+        self.recorder = STTProcessor()
 
     async def recv(self):
-        frame = await self.track.recv()
-        # Echo back the audio frame
+        try:
+            frame = await self.track.recv()
+        except MediaStreamError:
+            return
+
+        resampled = self.resampler.resample(frame)[0]
+        audio_data = resampled.to_ndarray().tobytes()
+        self.recorder.feed_audio(audio_data)
+        
         return frame
 
 
@@ -55,28 +69,29 @@ class P2PConnection:
     async def __on_track(self, track):
         print(f"Received track: {track}")
         if track.kind == "video":
-            # last_sent_time = 0
-            # send_interval = 5
+            last_sent_time = 0
+            send_interval = 5
 
-            while True:
-                frame = await track.recv()
-                # current_time = time.time()
-
+            # while True:
+            #     frame = await track.recv()
+                # await asyncio.sleep(time.time() - last_sent_time + 1)
+            #     current_time = time.time()
                 # if current_time - last_sent_time >= send_interval:
-                #     img = frame.to_ndarray()
-                #     img = cv2.cvtColor(img, cv2.COLOR_YUV2RGB_I420)
-                #     proctor.analyze(Image.fromarray(img), 1)
-                #     last_sent_time = current_time
+            #         img = frame.to_ndarray()
+            #         img = cv2.cvtColor(img, cv2.COLOR_YUV2RGB_I420)
+            #         proctor.analyze(Image.fromarray(img), None)
+            #         last_sent_time = current_time
 
                 # Open video stream window
-                img = frame.to_ndarray()
-                img = cv2.cvtColor(img, cv2.COLOR_YUV2BGR_I420)
-                cv2.imshow(f"Video stream", img)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+                # img = frame.to_ndarray()
+                # img = cv2.cvtColor(img, cv2.COLOR_YUV2BGR_I420)
+                # cv2.imshow(f"Video stream", img)
+                # if cv2.waitKey(1) & 0xFF == ord('q'):
+                #     break
         if track.kind == "audio":
             echo_track = AudioEchoTrack(track)
             self.connection.addTrack(echo_track)
+            echo_track.recorder.start_processing()
 
     async def set_remote_description(self, message):
         await self.connection.setRemoteDescription(

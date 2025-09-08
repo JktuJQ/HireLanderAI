@@ -12,7 +12,16 @@ document.addEventListener("DOMContentLoaded", (event)=>{
 
 var camera_allowed=false; 
 var mediaConstraints = {
-    audio: true, // We want an audio track
+    audio: {
+        autoGainControl: false,
+        channelCount: 1,
+        echoCancellation: false,
+        latency: 0,
+        noiseSuppression: false,
+        sampleRate: 48000,
+        sampleSize: 16,
+        volume: 1.0
+    },
     video: {
         height: 360
     } // ...and we want a video track
