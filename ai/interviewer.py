@@ -1,12 +1,12 @@
 import io
 import threading
-import pygame
 import google.generativeai as genai
 from RealtimeSTT import AudioToTextRecorder
 from gtts import gTTS
 import av
 from typing import Generator
 import fractions
+import asyncio
 
 from globals import *
 
@@ -31,6 +31,7 @@ class Interviewer:
         self.model = None  # https://huggingface.co/cointegrated/rubert-tiny
         self.text_to_speech = None  # https://github.com/KoljaB/RealtimeTTS
         # https://github.com/KoljaB/RealtimeSTT/blob/master/tests/minimalistic_talkbot.py
+        self.curr_answer = None
 
     @staticmethod
     def text_to_speech_online(text: str) -> Generator[av.AudioFrame, None, None]:
@@ -104,12 +105,12 @@ class Interviewer:
         return response.text
 
     @staticmethod
-    def get_answer():
-        """Функция, которая получает ответ собеседуемого. Измените ее сами, как вам надо."""
-        answer = input()
-        return answer
+    def wait_for_answer(answer_event):
+        """Функция, которая ждет ответ собеседуемого"""
+        answer_event.wait()
+        answer_event.clear()
 
-    def hold_interview(self, questions: list[str],
+    async def hold_interview(self, questions: list[str], answer_event: threading.Event = None,
                        livecoding_question: str = None):
         """
         input:
@@ -121,28 +122,31 @@ class Interviewer:
         # сначала лайвкодинг
         if livecoding_question is not None:
             # задаем вопрос
-            curr_question = self.process_text(question=livecoding_question,
+            self.curr_question = self.process_text(question=livecoding_question,
                                               history=None, livecoding=True)
-            print(curr_question)
-            # получаем ответ
-            curr_answer = self.get_answer()
+            print(self.curr_question)
+
+            Interviewer.wait_for_answer(answer_event)
+
             # храним историю
-            curr_history = "\n" + "вопрос" + "\n" + curr_question + "\n" + "ответ" + "\n" + curr_answer + "\n"
+            curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
+            self.curr_answer = None
 
             counter = 0
             # сессия вопрос-ответ по заданию лайвкодинга
             while counter < 3:
                 # задаем вопрос
-                curr_question = self.process_text(question=livecoding_question,
+                self.curr_question = self.process_text(question=livecoding_question,
                                                   history=curr_history,
                                                   livecoding=True)
-                print(curr_question)
-                if curr_question == "[NEXT_QUESTION]":
+                print(self.curr_question)
+                if self.curr_question == "[NEXT_QUESTION]":
                     break
                 # получаем ответ
-                curr_answer = self.get_answer()
+                Interviewer.wait_for_answer(answer_event)
                 # обновляем историю
-                curr_history += "\n" + "вопрос" + "\n" + curr_question + "\n" + "ответ" + "\n" + curr_answer + "\n"
+                curr_history += "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
+                self.curr_answer = None
 
                 counter += 1
 
@@ -150,27 +154,29 @@ class Interviewer:
         for i in range(len(questions)):
             print(questions[i])
             # задаем вопрос
-            curr_question = self.process_text(question=questions[i],
+            self.curr_question = self.process_text(question=questions[i],
                                               history=None, livecoding=False)
-            print(curr_question)
+            print(self.curr_question)
             # получаем ответ
-            curr_answer = self.get_answer()
+            Interviewer.wait_for_answer(answer_event)
             # храним историю
-            curr_history = "\n" + "вопрос" + "\n" + curr_question + "\n" + "ответ" + "\n" + curr_answer + "\n"
+            curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
+            self.curr_answer = None
             counter = 0
             # сессия вопрос-ответ по заданию лайвкодинга
             while counter < 3:
                 # задаем вопрос
-                curr_question = self.process_text(question=questions[i],
+                self.curr_question = self.process_text(question=questions[i],
                                                   history=curr_history,
                                                   livecoding=False)
-                print(curr_question)
-                if curr_question == "[NEXT_QUESTION]":
+                print(self.curr_question)
+                if self.curr_question == "[NEXT_QUESTION]":
                     break
                 # получаем ответ
-                curr_answer = self.get_answer()
+                Interviewer.wait_for_answer(answer_event)
                 # обновляем историю
-                curr_history = "\n" + "вопрос" + "\n" + curr_question + "\n" + "ответ" + "\n" + curr_answer + "\n"
+                curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
+                self.curr_answer = None
                 counter += 1
 
 

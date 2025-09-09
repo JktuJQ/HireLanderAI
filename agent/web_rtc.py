@@ -13,12 +13,15 @@ from PIL import Image
 import asyncio
 import logging
 import os
+import threading
 
 logging.getLogger('aioice.ice').setLevel(logging.ERROR)
 
 # proctor = Proctor()
 interviewer = Interviewer()
+q = ["""критерий: высшее техническое или экономическое образование\n тип: education\n сложность: easy\n follow_ups: ["какие курсы или сертификаты вы получали во время учебы?", "как ваше образование связано с работой бизнес аналитика?"]"""]
 
+STOP_WORD = "закончить ответ"
 
 class AudioEchoTrack(MediaStreamTrack):
     """
@@ -32,9 +35,13 @@ class AudioEchoTrack(MediaStreamTrack):
         self.resampler = av.AudioResampler(format="s16", layout="mono", rate=16_000)
         self.recorder = STTProcessor()
         self.response_frames = asyncio.Queue()
+
+        self.user_answer = ""
         
         self.player = None
         self.output_ready = False
+        self.current_pts = 0
+        self.add_pts = 0
         self.setup()
 
 
@@ -45,6 +52,21 @@ class AudioEchoTrack(MediaStreamTrack):
         silent_frame.pts = 0
         silent_frame.sample_rate = 48_000
         self.silent_frame = silent_frame
+
+        self.answer_event = threading.Event()
+        self.interview_thread = threading.Thread(target=self._run_interview, kwargs={"q": q, "answer_event": self.answer_event}, daemon=True)
+        
+        self.interview_thread.start()
+
+    def _run_interview(self, q, answer_event):
+        # Create a new event loop for this thread
+        loop = asyncio.new_event_loop()
+        
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(interviewer.hold_interview(q, answer_event))
+        finally:
+            loop.close()
 
     async def recv(self):
         try:
@@ -57,18 +79,29 @@ class AudioEchoTrack(MediaStreamTrack):
         self.recorder.feed_audio(audio_data)
 
         if self.recorder.transcribed:
-            interviewer.text_to_speech_online(self.recorder.text)
-            self.player = MediaPlayer("agent/audio/output.mp3").audio
-            self.output_ready = True
+            self.user_answer += self.recorder.text.lower() + " "
+            print(self.user_answer)
+            # interviewer.text_to_speech_online()           
+            # self.player = MediaPlayer("agent/audio/output.mp3", format="mp3", loop=False).audio
+            # self.output_ready = True
             self.recorder.transcribed = False
 
-        if self.output_ready:
-            try:
-                res = await asyncio.wait_for(self.player.recv(), timeout=0.5)
-                return res
-            except (MediaStreamError, asyncio.TimeoutError):
-                os.remove("agent/audio/output.mp3")
-                self.output_ready = False
+        if STOP_WORD in self.user_answer:
+            interviewer.curr_answer = self.user_answer
+            self.answer_event.set()
+            self.user_answer = ""
+            print("STOP WORD")
+
+        # if self.output_ready:
+        #     try:
+        #         res = await asyncio.wait_for(self.player.recv(), timeout=0.5)
+        #         res.pts += self.add_pts
+        #         self.current_pts = res.pts
+        #         return res
+        #     except (MediaStreamError, asyncio.TimeoutError):
+        #         os.remove("agent/audio/output.mp3")
+        #         self.output_ready = False
+        #         self.add_pts = self.current_pts # TODO: Decide if there should be accumulation or assignment
 
         return self.silent_frame
 
@@ -99,7 +132,6 @@ class P2PConnection:
         self.connection = RTCPeerConnection(configuration=configuration or P2PConnection.CONFIGURATION)
         self.connection.addTransceiver("video", "recvonly")
         self.connection.addTransceiver("audio", "sendrecv")
-        # self.connection.addTrack(MediaPlayer("./music.mp3").audio)
         self.connection.on("track", self.__on_track)
 
     async def __on_track(self, track):
