@@ -119,6 +119,7 @@ class Interviewer:
         output:
         функция полноценно проводит собеседовние, рекурсивно вызывая себя и process_text"""
 
+        comp_history = ""
         # сначала лайвкодинг
         if livecoding_question is not None:
             # задаем вопрос
@@ -130,6 +131,7 @@ class Interviewer:
 
             # храним историю
             curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
+            comp_history += curr_history
             self.curr_answer = None
 
             counter = 0
@@ -149,6 +151,7 @@ class Interviewer:
                 self.curr_answer = None
 
                 counter += 1
+            comp_history += curr_history
 
         # потом вопросы
         for i in range(len(questions)):
@@ -178,6 +181,9 @@ class Interviewer:
                 curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
                 self.curr_answer = None
                 counter += 1
+            comp_history += curr_history
+        with open("history.txt", "w") as file:
+            file.write(comp_history)
 
 
 class STTProcessor:
