@@ -49,4 +49,4 @@ socketio = SocketIO(application)
 def run(host: str = HOST, port: int = PORT):
     """Runs application on `http://{host}:{port}/`"""
 
-    socketio.run(app=application, host=host, port=port, debug=DEBUG)
+    socketio.run(app=application, host=host, port=port, debug=DEBUG, allow_unsafe_werkzeug=True)
