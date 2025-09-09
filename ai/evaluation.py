@@ -79,26 +79,31 @@ class Evaluator:
             contextgem.Aspect(
                 name="Название вакансии",
                 description=("Извлеките ТОЛЬКО название должности/позиции. Ищите: "
-                 "1) Текст после поля 'Название' или 'Позиция', "
-                 "2) Заголовки, выделенные жирным шрифтом, указывающие на позицию, "
-                 "3) Основное название должности (не название компании). "
-                 "Верните только название позиции, больше ничего."),
+                             "1) Текст после поля 'Название' или 'Позиция', "
+                             "2) Заголовки, выделенные жирным шрифтом, указывающие на позицию, "
+                             "3) Основное название должности (не название компании). "
+                             "Верните только название позиции, больше ничего."),
                 reference_depth="sentences",
+                add_justifications=False,
             ),
 
             contextgem.Aspect(
                 name="Детальные требования к кандидату",
                 description=("Все конкретные требования к кандидату. "
-                "Сосредоточьтесь на: уровне образования, технических навыках, опыте работы и обязанностях."),
+                             "Сосредоточьтесь на: уровне образования, технических навыках, опыте работы и обязанностях."),
+                reference_depth="sentences",
+                add_justifications=False,
                 concepts=[
                     contextgem.StringConcept(
                         name="Уровень образования",
-                        description=("Требуемое образование: высшее, среднее специальное, среднее профессиональное и т.д.")
+                        description=(
+                            "Требуемое образование: высшее, среднее специальное, среднее профессиональное и т.д.")
                     ),
                     contextgem.StringConcept(
-                    name="Технический стек",
-                    description=("Конкретные технологии, языки программирования, программное обеспечение и оборудование. "
-                                "Включите: серверы, сетевое оборудование, языки программирования, базы данных, ОС.")
+                        name="Технический стек",
+                        description=(
+                            "Конкретные технологии, языки программирования, программное обеспечение и оборудование. "
+                            "Включите: серверы, сетевое оборудование, языки программирования, базы данных, ОС.")
                     ),
                     contextgem.StringConcept(
                         name="Ключевые обязанности",
@@ -115,10 +120,7 @@ class Evaluator:
         processed_document = evaluator.extractor_model.extract_all(document, max_items_per_call=1)
         evaluator.job_requirements.append(str(processed_document.aspects[0].extracted_items[0].value))
         for job_requirement in processed_document.aspects[1].extracted_items:
-            job_requirement_text = [
-                f"{job_requirement.value}",
-            ]
-            evaluator.job_requirements.append("\n".join(job_requirement_text))
+            evaluator.job_requirements.append(f"{job_requirement.value}")
         return evaluator
 
     def grade(self, cv_file: str = None, conversation: str = None) -> dict[str, (int, str)]:
@@ -145,12 +147,12 @@ class Evaluator:
 
         job_requirements_text = []
         for i, job_requirement in enumerate(self.job_requirements):
-            job_requirements_text.append(f"Requirement №{i + 1}:" + job_requirement)
+            job_requirements_text.append(f"Требование №{i + 1}:" + job_requirement)
         job_requirements_text = "\n".join(job_requirements_text)
 
         full_document.add_concepts([
             contextgem.RatingConcept(
-                name="Overall Vacancy Fit Assessment",
+                name="Оценка соответствия резюме вакансии",
                 description=(
                     "Оцените кандидата по каждому критерию отдельно по шкале 1-100.\n"
                     "ВАЖНО: Дайте отдельную оценку для КАЖДОГО из перечисленных критериев.\n\n"
@@ -178,7 +180,7 @@ class Evaluator:
             evaluation[job_requirement] = (grade.value, grade.justification)
         return evaluation
 
-    def generate_questions(self, criteria, livecoding=False):
+    def generate_questions(self, criteria):
         """Generates questions for the interview based on the job description"""
 
         job_title = criteria[0].strip()
@@ -188,39 +190,22 @@ class Evaluator:
         for i, p in enumerate(blocks, start=1):
             full_document.append(f"{i}. {p}")
             full_document.append("")
-        if livecoding:
-            promt = """Тебе дано название должности и список критериев для оценки кандидата.\n
-                Для каждого критерия указано:\n
-                сам критерий,\n
-                причины, почему он выбран (на основе описания вакансии),\n
-                ссылка на текст вакансии.\n
-                Твоя задача: придумать одно задание для лайвкодинга, которое позволит проверить несколько (желательно все) критериев одновременно.\n
-                Требования к заданию:\n
-                Оно должно быть реалистичным и приближенным к рабочим задачам для данной должности.\n
-                Уровень сложности должен соответствовать ожидаемому уровню кандидата.\n
-                Задание должно быть чётко сформулировано, без двусмысленностей.\n
-                Если возможно — добавь вводные данные (например, пример входных данных) и ожидаемый результат.\n
-                Объясни, какие именно критерии проверяются этим заданием и как.\n
-                Формат ответа:\n
-                Формулировка задания для кандидата (только текст, который будет показан на собеседовании).
-                """
-        else:
-            promt = """Сгенерируй спискок вопросов для собеседования по данной должности.\n
-                Тебе дано название должности и список критериев, которые сгенерировала прошлая LLM в формате:\n
-                -сам критерий\n
-                -причины, почему прошлая LLM выбрала этот критерий, исходя из описания вакансии\n
-                -ссылка на текст описания вакансии
-                Формат ответа (пример):\n
-    
-                '      критерий: <текст критерия из входа>,\n'
-                '      вопрос: <вопрос для кандидата>,\n'
-                '      тип: <behavioral|technical|education|culture|other>,\n'
-                '      сложность: <easy|medium|hard>,\n'
-                '      follow_ups: [<вопрос 1>, <вопрос 2>]\n'
-    
-    
-                Требование: для каждого критерия сгенерировать 2-4 релевантных вопроса, 
-                включая как поведенческие (попросить конкретный кейс), так и проверочные/технические вопросы."""
+        promt = """Сгенерируй спискок вопросов для собеседования по данной должности.\n
+            Тебе дано название должности и список критериев, которые сгенерировала прошлая LLM в формате:\n
+            -сам критерий\n
+            -причины, почему прошлая LLM выбрала этот критерий, исходя из описания вакансии\n
+            -ссылка на текст описания вакансии
+            Формат ответа (пример):\n
+
+            '      критерий: <текст критерия из входа>,\n'
+            '      вопрос: <вопрос для кандидата>,\n'
+            '      тип: <behavioral|technical|education|culture|other>,\n'
+            '      сложность: <easy|medium|hard>,\n'
+            '      follow_ups: [<вопрос 1>, <вопрос 2>]\n'
+
+
+            Требование: для каждого критерия сгенерировать 2-4 релевантных вопроса, 
+            включая как поведенческие (попросить конкретный кейс), так и проверочные/технические вопросы."""
 
         full_document = contextgem.Document(raw_text="\n\n".join(full_document))
         full_document.add_concepts([
@@ -235,7 +220,3 @@ class Evaluator:
         for item in grades.extracted_items:
             res.append(item.value)
         return res
-
-if __name__ == "__main__":
-    ev = Evaluator([""])
-    print(ev.generate_questions(criteria=["бэкенд разработчик", "знать алгоритмы"], livecoding=True))
