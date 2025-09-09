@@ -28,11 +28,18 @@ class Proctor:
 
         :returns: Current concerns of the proctor - suspicion level and reasoning for it.
         """
+        try:
+            results = self.model.predict(source=image, conf=0.25, verbose=False)
+            results_mask = self.model_masks(source=image, conf=0.5, verbose=False)
+            phone_detected = False
+            people_count = 0
+            mask_detected = results_mask[0].names[int(results_mask[0].boxes[0].cls[0])] == "with_mask"
+        except:
+            results = []
+            phone_detected = False
+            mask_detected = False
+            people_count = 1
 
-        results = self.model.predict(source=image, conf=0.25, verbose=False)
-        results_mask = self.model_masks(source=image, conf=0.5, verbose=False)
-        phone_detected = False
-        people_count = 0
         flag = 0
 
         for result in results:
@@ -44,9 +51,6 @@ class Proctor:
                     people_count += 1
                 if label == 'cell phone':
                     phone_detected = True
-
-        mask_detected = results_mask[0].names[int(
-            results_mask[0].boxes[0].cls[0])] == "with_mask"
 
         gpg = GetPersonsGaze(image)
         status = gpg.estimate_gaze_from_image()
