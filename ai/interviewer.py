@@ -32,6 +32,7 @@ class Interviewer:
         self.text_to_speech = None  # https://github.com/KoljaB/RealtimeTTS
         # https://github.com/KoljaB/RealtimeSTT/blob/master/tests/minimalistic_talkbot.py
         self.curr_answer = None
+        self.curr_question = None
 
     @staticmethod
     def text_to_speech_online(text: str) -> Generator[av.AudioFrame, None, None]:
@@ -104,8 +105,7 @@ class Interviewer:
 
         return response.text
 
-    @staticmethod
-    def wait_for_answer(answer_event):
+    def wait_for_answer(self, answer_event):
         """Функция, которая ждет ответ собеседуемого"""
         answer_event.wait()
         answer_event.clear()
@@ -126,10 +126,11 @@ class Interviewer:
                                               history=None, livecoding=True)
             print(self.curr_question)
 
-            Interviewer.wait_for_answer(answer_event)
+            self.wait_for_answer(answer_event)
 
             # храним историю
             curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
+            self.curr_question = None
             self.curr_answer = None
 
             counter = 0
@@ -143,9 +144,10 @@ class Interviewer:
                 if self.curr_question == "[NEXT_QUESTION]":
                     break
                 # получаем ответ
-                Interviewer.wait_for_answer(answer_event)
+                self.wait_for_answer(answer_event)
                 # обновляем историю
                 curr_history += "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
+                self.curr_question = None
                 self.curr_answer = None
 
                 counter += 1
@@ -158,9 +160,10 @@ class Interviewer:
                                               history=None, livecoding=False)
             print(self.curr_question)
             # получаем ответ
-            Interviewer.wait_for_answer(answer_event)
+            self.wait_for_answer(answer_event)
             # храним историю
             curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
+            self.curr_question = None
             self.curr_answer = None
             counter = 0
             # сессия вопрос-ответ по заданию лайвкодинга
@@ -173,9 +176,10 @@ class Interviewer:
                 if self.curr_question == "[NEXT_QUESTION]":
                     break
                 # получаем ответ
-                Interviewer.wait_for_answer(answer_event)
+                self.wait_for_answer(answer_event)
                 # обновляем историю
                 curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
+                self.curr_question = None
                 self.curr_answer = None
                 counter += 1
 

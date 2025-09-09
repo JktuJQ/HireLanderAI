@@ -14,10 +14,11 @@ import asyncio
 import logging
 import os
 import threading
+import time
 
 logging.getLogger('aioice.ice').setLevel(logging.ERROR)
 
-# proctor = Proctor()
+proctor = Proctor()
 interviewer = Interviewer()
 q = ["""критерий: высшее техническое или экономическое образование\n тип: education\n сложность: easy\n follow_ups: ["какие курсы или сертификаты вы получали во время учебы?", "как ваше образование связано с работой бизнес аналитика?"]"""]
 
@@ -54,14 +55,15 @@ class AudioEchoTrack(MediaStreamTrack):
         self.silent_frame = silent_frame
 
         self.answer_event = threading.Event()
-        self.interview_thread = threading.Thread(target=self._run_interview, kwargs={"q": q, "answer_event": self.answer_event}, daemon=True)
+        self.interview_thread = threading.Thread(target=self.__run_interview, kwargs={"q": q, "answer_event": self.answer_event}, daemon=True)
+
+        self.question_generated_event = threading.Event()
+        self.reponse_generated = False
         
         self.interview_thread.start()
 
-    def _run_interview(self, q, answer_event):
-        # Create a new event loop for this thread
+    def __run_interview(self, q, answer_event):
         loop = asyncio.new_event_loop()
-        
         asyncio.set_event_loop(loop)
         try:
             loop.run_until_complete(interviewer.hold_interview(q, answer_event))
@@ -69,6 +71,15 @@ class AudioEchoTrack(MediaStreamTrack):
             loop.close()
 
     async def recv(self):
+        if not interviewer.curr_question:
+            return self.silent_frame
+
+        if not self.reponse_generated:
+            interviewer.text_to_speech_online(interviewer.curr_question)           
+            self.player = MediaPlayer("agent/audio/output.mp3", format="mp3", loop=False).audio
+            self.output_ready = True
+            self.reponse_generated = True
+
         try:
             frame = await self.track.recv()
         except MediaStreamError:
@@ -81,27 +92,26 @@ class AudioEchoTrack(MediaStreamTrack):
         if self.recorder.transcribed:
             self.user_answer += self.recorder.text.lower() + " "
             print(self.user_answer)
-            # interviewer.text_to_speech_online()           
-            # self.player = MediaPlayer("agent/audio/output.mp3", format="mp3", loop=False).audio
-            # self.output_ready = True
             self.recorder.transcribed = False
 
         if STOP_WORD in self.user_answer:
             interviewer.curr_answer = self.user_answer
             self.answer_event.set()
+            
             self.user_answer = ""
+            self.reponse_generated = False
             print("STOP WORD")
 
-        # if self.output_ready:
-        #     try:
-        #         res = await asyncio.wait_for(self.player.recv(), timeout=0.5)
-        #         res.pts += self.add_pts
-        #         self.current_pts = res.pts
-        #         return res
-        #     except (MediaStreamError, asyncio.TimeoutError):
-        #         os.remove("agent/audio/output.mp3")
-        #         self.output_ready = False
-        #         self.add_pts = self.current_pts # TODO: Decide if there should be accumulation or assignment
+        if self.output_ready:
+            try:
+                res = await asyncio.wait_for(self.player.recv(), timeout=0.5)
+                res.pts += self.add_pts
+                self.current_pts = res.pts
+                return res
+            except (MediaStreamError, asyncio.TimeoutError):
+                os.remove("agent/audio/output.mp3")
+                self.output_ready = False
+                self.add_pts = self.current_pts # TODO: Decide if there should be accumulation or assignment
 
         return self.silent_frame
 
@@ -140,15 +150,15 @@ class P2PConnection:
             last_sent_time = 0
             send_interval = 5
 
-            # while True:
-            #     frame = await track.recv()
-                # await asyncio.sleep(time.time() - last_sent_time + 1)
-            #     current_time = time.time()
-                # if current_time - last_sent_time >= send_interval:
-            #         img = frame.to_ndarray()
-            #         img = cv2.cvtColor(img, cv2.COLOR_YUV2RGB_I420)
-            #         proctor.analyze(Image.fromarray(img), None)
-            #         last_sent_time = current_time
+            while True:
+                frame = await track.recv()
+                await asyncio.sleep(time.time() - last_sent_time + 1)
+                current_time = time.time()
+                if current_time - last_sent_time >= send_interval:
+                    img = frame.to_ndarray()
+                    img = cv2.cvtColor(img, cv2.COLOR_YUV2RGB_I420)
+                    proctor.analyze(Image.fromarray(img), None)
+                    last_sent_time = current_time
 
                 # Open video stream window
                 # img = frame.to_ndarray()
