@@ -3,14 +3,18 @@ from globals import *
 import aiohttp
 from socketio import AsyncClient
 from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription, RTCIceServer, RTCConfiguration, MediaStreamTrack
+from aiortc.contrib.media import MediaPlayer
 from aiortc.mediastreams import MediaStreamError
 import cv2
-import time
 import av
 from ai.interviewer import STTProcessor, Interviewer
 from ai.proctoring import Proctor
 from PIL import Image
 import asyncio
+import logging
+import os
+
+logging.getLogger('aioice.ice').setLevel(logging.ERROR)
 
 # proctor = Proctor()
 interviewer = Interviewer()
@@ -27,27 +31,46 @@ class AudioEchoTrack(MediaStreamTrack):
         self.track = track
         self.resampler = av.AudioResampler(format="s16", layout="mono", rate=16_000)
         self.recorder = STTProcessor()
-        self.response_frames = []
+        self.response_frames = asyncio.Queue()
+        
+        self.player = None
+        self.output_ready = False
+        self.setup()
+
+
+    def setup(self):
+        silent_frame = av.AudioFrame(format="s16", layout="stereo", samples=160)
+        for p in silent_frame.planes: # Remove random date, so there are no glitches
+            p.update(bytes(p.buffer_size))
+        silent_frame.pts = 0
+        silent_frame.sample_rate = 48_000
+        self.silent_frame = silent_frame
 
     async def recv(self):
-        if self.response_frames:
-            return self.response_frames.pop(0)
-
         try:
             frame = await self.track.recv()
         except MediaStreamError:
-            return
+            return self.silent_frame
 
         resampled = self.resampler.resample(frame)[0]
         audio_data = resampled.to_ndarray().tobytes()
         self.recorder.feed_audio(audio_data)
 
         if self.recorder.transcribed:
-            self.response_frames = interviewer.text_to_speech_online(self.recorder.text)
+            interviewer.text_to_speech_online(self.recorder.text)
+            self.player = MediaPlayer("agent/audio/output.mp3").audio
+            self.output_ready = True
             self.recorder.transcribed = False
-            return self.response_frames.pop(0)
-        
-        return frame
+
+        if self.output_ready:
+            try:
+                res = await asyncio.wait_for(self.player.recv(), timeout=0.5)
+                return res
+            except (MediaStreamError, asyncio.TimeoutError):
+                os.remove("agent/audio/output.mp3")
+                self.output_ready = False
+
+        return self.silent_frame
 
 
 class P2PConnection:
@@ -66,6 +89,9 @@ class P2PConnection:
     ])
 
     def __init__(self, client: 'WebRTCClient', peer_id: int, configuration: RTCConfiguration = None):
+        import os
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        print("pwd:", dir_path)
         self.client = client
         self.peer_id = peer_id
         self.pending_ice_candidates = []
@@ -73,6 +99,7 @@ class P2PConnection:
         self.connection = RTCPeerConnection(configuration=configuration or P2PConnection.CONFIGURATION)
         self.connection.addTransceiver("video", "recvonly")
         self.connection.addTransceiver("audio", "sendrecv")
+        # self.connection.addTrack(MediaPlayer("./music.mp3").audio)
         self.connection.on("track", self.__on_track)
 
     async def __on_track(self, track):

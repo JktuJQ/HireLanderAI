@@ -1,10 +1,12 @@
 import io
 import threading
-
+import pygame
 import google.generativeai as genai
 from RealtimeSTT import AudioToTextRecorder
 from gtts import gTTS
 import av
+from typing import Generator
+import fractions
 
 from globals import *
 
@@ -31,24 +33,10 @@ class Interviewer:
         # https://github.com/KoljaB/RealtimeSTT/blob/master/tests/minimalistic_talkbot.py
 
     @staticmethod
-    def text_to_speech_online(text: str):
+    def text_to_speech_online(text: str) -> Generator[av.AudioFrame, None, None]:
         """Converts text to speech in Russian"""
         tts = gTTS(text=text, lang='ru')
-        audio_bytes = io.BytesIO()
-        tts.write_to_fp(audio_bytes)
-        audio_bytes.seek(0)
-
-        print("Creating frames")
-        with av.open(audio_bytes, format="mp3") as container:
-            audio_stream = container.streams.audio[0]
-            frames = []
-            resampler = av.AudioResampler(format="s16", layout="stereo", rate=48_000)
-            for packet in container.demux(audio_stream):
-                for frame in packet.decode():
-                    resampled = resampler.resample(frame)
-                    frames.extend(resampled)
-        print(f"Got list of frames: {len(frames)}\n{frames}")                    
-        return frames
+        tts.save("agent/audio/output.mp3")
 
     @staticmethod
     def process_text(question: str, history: str = None,
