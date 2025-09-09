@@ -1,4 +1,3 @@
-import cv2
 import mediapipe as mp
 import numpy as np
 from PIL import Image
@@ -49,7 +48,6 @@ class Proctor:
         mask_detected = results_mask[0].names[int(
             results_mask[0].boxes[0].cls[0])] == "with_mask"
 
-        # хм
         gpg = GetPersonsGaze(image)
         status = gpg.estimate_gaze_from_image()
         warning = self.ac.step(status=status)
@@ -148,9 +146,10 @@ class GetPersonsGaze:
         """Возвращает направление взгляда по фотографии"""
         img = np.array(self.image)
         h, w = img.shape[:2]
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img_rgb = np.array(self.image.convert("RGB"))
 
         results = self.face_mesh.process(img_rgb)
+
         if not results.multi_face_landmarks:
             return {"error": "Лицо не найдено"}
 
@@ -238,6 +237,8 @@ class AntiCheat:
 if __name__ == "__main__":
     proctor = Proctor()
     img = Image.open("norm.jpeg")
+    gpg = GetPersonsGaze(img)
+    print(gpg.estimate_gaze_from_image())
     print(proctor.analyze(image=img))
     img = Image.open("two.png")
     print(proctor.analyze(image=img))
