@@ -1,4 +1,4 @@
-/* Hero Section - Stylish */
+
 .hero-section {
     background: linear-gradient(135deg,
         rgba(102, 126, 234, 0.95) 0%,
@@ -67,7 +67,7 @@
     flex-wrap: wrap;
 }
 
-/* Modern Button Styles */
+
 .btn {
     padding: 16px 32px;
     border: none;
@@ -108,7 +108,7 @@
 }
 
 .btn-outline:hover {
-    /* background: rgba(255, 255, 255, 0.25); */
+    
     border-color: rgba(255, 255, 255, 0.5);
     transform: translateY(-3px) scale(1.05);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
@@ -135,7 +135,7 @@
     transform: scale(1.2) rotate(5deg);
 }
 
-/* Features Section */
+
 .features-section {
     padding: 49px 0;
     background: white;
@@ -241,7 +241,7 @@
     font-size: 0.95rem;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
     .hero-section {
         padding: 60px 0;

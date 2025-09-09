@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", (event)=>{
         window.location.replace("/");
     });
 
-    // document.getElementById("room_link").innerHTML=`or the link: <span class="heading-mark">${window.location.href}</span>`;
+   
 
 });
 
@@ -83,13 +83,11 @@ function setAudioMuteState(flag)
 {
     let local_stream = myVideo.srcObject;
     local_stream.getAudioTracks().forEach((track)=>{track.enabled = !flag;});
-    // switch button icon
     document.getElementById("mute_icon").innerText = (flag)? "mic_off": "mic";
 }
 function setVideoMuteState(flag)
 {
     let local_stream = myVideo.srcObject;
     local_stream.getVideoTracks().forEach((track)=>{track.enabled = !flag;});
-    // switch button icon
     document.getElementById("vid_mute_icon").innerText = (flag)? "videocam_off": "videocam";
 }

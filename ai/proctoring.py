@@ -84,17 +84,17 @@ class GetPersonsGaze:
 
     def __init__(self, image):
         self.image = image
-        # модель для обнаружения ключевых точек
+       
         self.face_mesh = mp.solutions.face_mesh.FaceMesh(
             static_image_mode=True,
             refine_landmarks=True)
 
         self.LEFT_IRIS_IDX = [468, 469, 470, 471,
-                              472]  # индексы, которые отмечают радужную оболочку левого глаза
+                              472] 
         self.RIGHT_IRIS_IDX = [473, 474, 475, 476,
-                               477]  # радужка правого глаза
-        self.LEFT_EYE_CORNERS = [33, 133]  # угол левого глаза
-        self.RIGHT_EYE_CORNERS = [362, 263]  # угол правого глаза
+                               477] 
+        self.LEFT_EYE_CORNERS = [33, 133]  
+        self.RIGHT_EYE_CORNERS = [362, 263] 
         self.TOP_IDX = 159
         self.BOTTOM_IDX = 145
 
@@ -110,9 +110,9 @@ class GetPersonsGaze:
         p2 = landmarks[corner_idx[1]]
         p1_xy = self.landmarks_to_xy(p1, image_w, image_h)
         p2_xy = self.landmarks_to_xy(p2, image_w, image_h)
-        center = (p1_xy + p2_xy) / 2.0  # середина между corner точками
-        width = np.linalg.norm(p1_xy - p2_xy)  # расстояние между углами глаза
-        height = width * 0.6  # самый лучший вариант, я пробовал, честно
+        center = (p1_xy + p2_xy) / 2.0
+        width = np.linalg.norm(p1_xy - p2_xy)  
+        height = width * 0.6 
         return center, width, height
 
     def iris_center(self, landmarks, iris_idx_list, image_w, image_h):
@@ -121,7 +121,7 @@ class GetPersonsGaze:
         pts_xy = np.array(
             [self.landmarks_to_xy(p, image_w, image_h) for p in pts])
         return pts_xy.mean(
-            axis=0)  # усредняем положение точек радужной оболочки
+            axis=0)  
 
     @staticmethod
     def classify_gaze(iris_xy, eye_center, eye_w, eye_h, x_thresh=0.15,
@@ -131,17 +131,16 @@ class GetPersonsGaze:
         x_thresh, y_thresh: пороги в долях от размера глаза (например 0.15 == 15% ширины глаза).
         Возвращает 'left','right','up','down','center'.
         """
-        # нормированные смещения радужной оболочки
         dx = (iris_xy[0] - eye_center[0]) / eye_w
         dy = (iris_xy[1] - eye_center[1]) / eye_h
 
         ax = abs(dx)
         ay = abs(dy)
 
-        if ax < x_thresh and ay < y_thresh:  # мало сместилось относительно центра
+        if ax < x_thresh and ay < y_thresh:  
             return "center", dx, dy
 
-        if ax >= ay:  # сместилось по оси x больше чем по y
+        if ax >= ay: 
             return ("left" if dx < 0 else "right"), dx, dy
         else:
             return ("up" if dy < 0 else "down"), dx, dy
@@ -159,13 +158,12 @@ class GetPersonsGaze:
 
         face_landmarks = results.multi_face_landmarks[0].landmark
 
-        # получаем центры радужек
+ 
         left_iris_xy = self.iris_center(face_landmarks, self.LEFT_IRIS_IDX, w,
                                         h)
         right_iris_xy = self.iris_center(face_landmarks, self.RIGHT_IRIS_IDX,
                                          w, h)
 
-        # получаем центры глаз и размеры
         left_eye_center, left_w, left_h = self.eye_center_and_size(
             face_landmarks,
             self.LEFT_EYE_CORNERS,
@@ -173,15 +171,14 @@ class GetPersonsGaze:
         right_eye_center, right_w, right_h = self.eye_center_and_size(
             face_landmarks, self.RIGHT_EYE_CORNERS, w, h)
 
-        # классифицируем по каждому глазу
+
         left_dir, ldx, ldy = self.classify_gaze(left_iris_xy, left_eye_center,
                                                 left_w, left_h)
         right_dir, rdx, rdy = self.classify_gaze(right_iris_xy,
                                                  right_eye_center,
                                                  right_w, right_h)
 
-        # если оба глаза говорят одно и то же -> берем его.
-        # иначе, берем более выраженное смещение (max по абсолютному значению dx/dy).
+
         if left_dir == right_dir:
             final = left_dir
         else:
@@ -216,7 +213,6 @@ class AntiCheat:
         states["centers"] = array.count("center")
 
         most_popular = max(states.values())
-        # возвращает первый ключ, значение которого равно most_popular
         return next((k for k, v in states.items() if v == most_popular), None)
 
     def step(self, status: str) -> bool:

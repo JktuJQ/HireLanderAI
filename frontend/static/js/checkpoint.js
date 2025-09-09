@@ -12,18 +12,18 @@ document.addEventListener("DOMContentLoaded", (event)=>{
         audioMuted = !audioMuted;
         let local_stream = myVideo.srcObject;
         local_stream.getAudioTracks().forEach((track)=>{track.enabled = !audioMuted;});
-        // store in hidden from input
+        
         muteAudioField.value = (audioMuted)? "1":"0";    
-        // switch button icon
+        
         document.getElementById("mute_icon").innerText = (audioMuted)? "mic_off": "mic";
     });    
     muteVidBttn.addEventListener("click", (event)=>{
         videoMuted = !videoMuted;
         let local_stream = myVideo.srcObject;
         local_stream.getVideoTracks().forEach((track)=>{track.enabled = !videoMuted;});
-        // store in hidden from input
+        
         muteVideoField.value = (videoMuted)? "1":"0";    
-        // switch button icon
+     
         document.getElementById("vid_mute_icon").innerText = (videoMuted)? "videocam_off": "videocam";
     });  
     

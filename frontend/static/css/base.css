@@ -33,7 +33,7 @@
 .nav-brand .material-icons {
     font-size: 2rem;
     color: #3b82f6;
-    /* margin-top: 0.1rem; */
+ 
 }
 
 .brand-text {
@@ -110,7 +110,7 @@
     width: 100%;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
     .nav-container {
         padding: 0 15px;
@@ -157,7 +157,6 @@
     }
 }
 
-/* Button styles for forms */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -204,9 +203,7 @@
     font-size: 1.1rem;
 }
 
-/* Добавить в base.css для глобальной поддержки */
 
-/* Global Alert Styles */
 .alert {
     display: flex;
     align-items: center;

@@ -12,7 +12,6 @@
         <h1 class="evaluation-title">Оценка резюме под вакансию</h1>
         <p class="evaluation-subtitle">Загрузите вакансию и резюме для автоматической оценки соответствия</p>
 
-        <!-- Кнопка очистки -->
         {% if vacancy_requirements or evaluation_results %}
         <div class="clear-button-container">
             <a href="{{ url_for('clear_evaluation_route') }}" class="btn btn-danger clear-btn">
@@ -23,7 +22,6 @@
         {% endif %}
     </div>
 
-    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="flash-messages">
@@ -43,8 +41,6 @@
     {% endwith %}
 
     <div class="evaluation-content">
-        <!-- Остальной код остается без изменений -->
-        <!-- Vacancy Section -->
         <div class="section-card">
             <h2 class="section-title">
                 <span class="material-icons">work</span>
@@ -104,7 +100,7 @@
             {% endif %}
         </div>
 
-        <!-- Resume Section -->
+        
         <div class="section-card">
             <h2 class="section-title">
                 <span class="material-icons">description</span>
@@ -186,7 +182,6 @@
     </div>
 </div>
 
-<!-- Loading Overlay -->
 <div id="loading-overlay" class="loading-overlay">
     <div class="loading-content">
         <div class="loading-spinner"></div>
@@ -202,7 +197,7 @@
 
 {% block js %}
 <script>
-// File upload handling
+
 document.querySelectorAll('.file-input').forEach(input => {
     input.addEventListener('change', function(e) {
         const fileName = e.target.files[0]?.name;
@@ -213,7 +208,7 @@ document.querySelectorAll('.file-input').forEach(input => {
     });
 });
 
-// Radio button handling for existing files
+
 document.querySelectorAll('input[name="vacancy_source"]').forEach(radio => {
     radio.addEventListener('change', function() {
         const uploadArea = document.getElementById('vacancy-upload-area');
@@ -240,7 +235,7 @@ document.querySelectorAll('input[name="resume_source"]').forEach(radio => {
     });
 });
 
-// Form submission with loading overlay
+
 document.querySelectorAll('form').forEach(form => {
     form.addEventListener('submit', function(e) {
         const action = this.querySelector('button[type="submit"]').value;
@@ -261,7 +256,7 @@ document.querySelectorAll('form').forEach(form => {
 
         loadingOverlay.style.display = 'flex';
 
-        // Simulate processing time update
+       
         let timeLeft = parseInt(loadingTime.textContent);
         const countdown = setInterval(() => {
             timeLeft--;

@@ -1,11 +1,9 @@
-/* Dashboard Page Specific Styles */
 .dashboard-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1rem;
 }
 
-/* Stats Grid */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -56,7 +54,7 @@
     font-weight: 500;
 }
 
-/* Dashboard Content */
+
 .dashboard-content {
     display: flex;
     flex-direction: column;
@@ -119,7 +117,7 @@
     border-color: var(--primary-blue);
 }
 
-/* Interview List */
+
 .interview-list {
     display: flex;
     flex-direction: column;
@@ -192,7 +190,7 @@
     color: var(--primary-blue);
 }
 
-/* Evaluation List */
+
 .evaluation-list {
     display: flex;
     flex-direction: column;
@@ -260,7 +258,7 @@
     font-size: 1rem;
 }
 
-/* Analytics */
+
 .analytics-container {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -314,13 +312,12 @@
     font-size: 1.125rem;
 }
 
-/* Simple Chart Styles */
 #performanceChart {
     max-width: 100%;
     height: auto;
 }
 
-/* Responsive Design */
+
 @media (max-width: 1024px) {
     .analytics-container {
         grid-template-columns: 1fr;

@@ -27,10 +27,7 @@ class Interviewer:
     def __init__(self, pretrained: bool = True):
         self.full_conversation: str = ""
 
-        self.speech_to_text = None  # https://github.com/KoljaB/RealtimeSTT
-        self.model = None  # https://huggingface.co/cointegrated/rubert-tiny
-        self.text_to_speech = None  # https://github.com/KoljaB/RealtimeTTS
-        # https://github.com/KoljaB/RealtimeSTT/blob/master/tests/minimalistic_talkbot.py
+        self.model = None
         self.curr_answer = None
         self.curr_question = None
 
@@ -120,33 +117,33 @@ class Interviewer:
         функция полноценно проводит собеседовние, рекурсивно вызывая себя и process_text"""
 
         comp_history = ""
-        # сначала лайвкодинг
+
         if livecoding_question is not None:
-            # задаем вопрос
+ 
             self.curr_question = self.process_text(question=livecoding_question,
                                               history=None, livecoding=True)
             print(self.curr_question)
 
             self.wait_for_answer(answer_event)
 
-            # храним историю
+     
             curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
             self.curr_question = None
             self.curr_answer = None
 
             counter = 0
-            # сессия вопрос-ответ по заданию лайвкодинга
+
             while counter < 3:
-                # задаем вопрос
+            
                 self.curr_question = self.process_text(question=livecoding_question,
                                                   history=curr_history,
                                                   livecoding=True)
                 print(self.curr_question)
                 if self.curr_question == "[NEXT_QUESTION]":
                     break
-                # получаем ответ
+            
                 self.wait_for_answer(answer_event)
-                # обновляем историю
+              
                 curr_history += "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
                 self.curr_question = None
                 self.curr_answer = None
@@ -154,32 +151,31 @@ class Interviewer:
                 counter += 1
             comp_history += curr_history
 
-        # потом вопросы
         for i in range(len(questions)):
             print(questions[i])
-            # задаем вопрос
+       
             self.curr_question = self.process_text(question=questions[i],
                                               history=None, livecoding=False)
             print(self.curr_question)
-            # получаем ответ
+       
             self.wait_for_answer(answer_event)
-            # храним историю
+
             curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
             self.curr_question = None
             self.curr_answer = None
             counter = 0
-            # сессия вопрос-ответ по заданию лайвкодинга
+         
             while counter < 3:
-                # задаем вопрос
+         
                 self.curr_question = self.process_text(question=questions[i],
                                                   history=curr_history,
                                                   livecoding=False)
                 print(self.curr_question)
                 if self.curr_question == "[NEXT_QUESTION]":
                     break
-                # получаем ответ
+            
                 self.wait_for_answer(answer_event)
-                # обновляем историю
+         
                 curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
                 self.curr_question = None
                 self.curr_answer = None
@@ -193,7 +189,7 @@ class STTProcessor:
     def __init__(self):
         import logging
 
-        logging.getLogger("faster_whisper").setLevel(logging.ERROR)  # Remove annoying debug info of RealtimeSTT
+        logging.getLogger("faster_whisper").setLevel(logging.ERROR)  
 
         self.recorder_config = {
             "spinner": True,

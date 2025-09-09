@@ -8,7 +8,6 @@
 
 {% block content %}
 <div class="profile-container">
-    <!-- Header Section -->
     <div class="profile-header">
         <div class="profile-avatar">
             <img src="{{ url_for('static', filename=('uploads/avatars/' + user.avatar_filepath) if user.avatar_filepath else 'assets/default_avatar.png') }}"
@@ -38,7 +37,7 @@
                 {% if user.role_id == 1 %}Интервьюер{% else %}Кандидат{% endif %}
             </span>
             
-            <!-- Share Button and Logout -->
+           
             <div class="profile-actions">
                 {% if is_own_profile %}
                 <button class="btn btn-outline share-btn" onclick="copyProfileLink()">
@@ -53,7 +52,7 @@
             </div>
         </div>
 
-        <!-- Stats Section -->
+      
         <div class="profile-stats">
             <div class="stat-card">
                 <div class="stat-number">12</div>
@@ -70,9 +69,8 @@
         </div>
     </div>
 
-    <!-- Main Content Grid -->
+   
     <div class="profile-grid">
-        <!-- Left Column: Contact Info -->
         <div class="profile-column">
             <div class="profile-section contact-section">
                 <h2 class="section-title">
@@ -137,7 +135,7 @@
             </div>
         </div>
 
-        <!-- Right Column: Edit Form (only for own profile) -->
+       
         {% if is_own_profile %}
         <div class="profile-column">
             <div class="profile-section edit-section">
@@ -218,7 +216,7 @@
     </div>
 </div>
 
-<!-- Share Modal -->
+
 <div id="share-modal" class="modal">
     <div class="modal-content">
         <span class="close-modal">&times;</span>
@@ -239,12 +237,11 @@
 
 {% block js %}
 <script>
-// Auto-submit avatar form when file is selected
 document.getElementById('avatar')?.addEventListener('change', function() {
     this.form.submit();
 });
 
-// Character counter for bio textarea
+
 const bioTextarea = document.querySelector('.form-textarea');
 const charCounter = document.getElementById('bio-char-count');
 
@@ -260,7 +257,7 @@ if (bioTextarea && charCounter) {
     });
 }
 
-// File upload styling
+
 const fileInput = document.getElementById('document-upload');
 if (fileInput) {
     fileInput.addEventListener('change', function(e) {
@@ -272,7 +269,7 @@ if (fileInput) {
     });
 }
 
-// Share functionality
+
 function copyProfileLink() {
     const modal = document.getElementById('share-modal');
     modal.style.display = 'block';
@@ -292,7 +289,7 @@ function copyToClipboard() {
     }, 3000);
 }
 
-// Modal functionality
+
 document.querySelector('.close-modal')?.addEventListener('click', function() {
     document.getElementById('share-modal').style.display = 'none';
 });
@@ -304,12 +301,12 @@ window.addEventListener('click', function(event) {
     }
 });
 
-// Auto-select text on input focus
+
 document.getElementById('profile-link')?.addEventListener('focus', function() {
     this.select();
 });
 
-// Logout confirmation
+
 document.querySelector('.logout-btn')?.addEventListener('click', function(e) {
     if (!confirm('Вы уверены, что хотите выйти из аккаунта?')) {
         e.preventDefault();

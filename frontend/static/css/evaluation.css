@@ -1,4 +1,3 @@
-/* evaluation.css */
 .evaluation-container {
     max-width: 1200px;
     margin: 40px auto;
@@ -196,7 +195,6 @@
     cursor: not-allowed;
 }
 
-/* Results Section */
 .results-section {
     margin-top: 25px;
     padding-top: 25px;
@@ -228,7 +226,7 @@
     line-height: 1.4;
 }
 
-/* Evaluation Results */
+
 .evaluation-results {
     display: flex;
     flex-direction: column;
@@ -303,7 +301,7 @@
     line-height: 1.5;
 }
 
-/* Loading Overlay */
+
 .loading-overlay {
     display: none;
     position: fixed;
@@ -362,7 +360,6 @@
     font-weight: 500;
 }
 
-/* Responsive Design */
 @media (max-width: 968px) {
     .evaluation-content {
         grid-template-columns: 1fr;
@@ -409,9 +406,6 @@
     }
 }
 
-/* Добавить в evaluation.css */
-
-/* Flash Messages */
 .flash-messages {
     margin-bottom: 30px;
     max-width: 1000px;
@@ -471,7 +465,6 @@
     }
 }
 
-/* Responsive for flash messages */
 @media (max-width: 768px) {
     .flash-messages {
         margin-bottom: 20px;
@@ -487,9 +480,7 @@
     }
 }
 
-/* Добавить в evaluation.css */
 
-/* Clear Button */
 .clear-button-container {
     margin-top: 20px;
     text-align: center;
@@ -521,7 +512,7 @@
     font-size: 1.1rem;
 }
 
-/* Responsive for clear button */
+
 @media (max-width: 768px) {
     .clear-button-container {
         margin-top: 15px;

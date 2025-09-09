@@ -1,7 +1,6 @@
 var myID;
 var _peer_list = {};
 
-// socketio 
 var protocol = window.location.protocol;
 console.log(protocol + '//' + document.domain + ':' + location.port)
 var socket = io(protocol + '//' + document.domain + ':' + location.port, {autoConnect: false});
@@ -24,7 +23,7 @@ var mediaConstraints = {
     },
     video: {
         height: 360
-    } // ...and we want a video track
+    }
 };
 
 function startCamera()
@@ -35,7 +34,7 @@ function startCamera()
         camera_allowed = true;
         setAudioMuteState(audioMuted);                
         setVideoMuteState(videoMuted);
-        //start the socketio connection
+      
         socket.connect();
     })
     .catch((e)=>{
@@ -55,7 +54,7 @@ socket.on("peer_connect", (data)=>{
     console.log("peer_connect ", data);
     let peer_id = data["sid"];
     let display_name = data["name"];
-    _peer_list[peer_id] = undefined; // add new user to user list
+    _peer_list[peer_id] = undefined; 
     addVideoElement(peer_id, display_name);
 });
 socket.on("peer_disconnect", (data)=>{
@@ -67,10 +66,10 @@ socket.on("peer_disconnect", (data)=>{
 socket.on("peer_list", (data)=>{
     console.log("user list recvd ", data);
     myID = data["target_id"];
-    if( "peers" in data) // not the first to connect to room, existing user list recieved
+    if( "peers" in data)
     {
         let recvd_list = data["peers"];  
-        // add existing users to user list
+      
         for(peer_id in recvd_list)
         {
             display_name = recvd_list[peer_id];
@@ -89,7 +88,7 @@ function closeConnection(peer_id)
         _peer_list[peer_id].ontrack = null;
         _peer_list[peer_id].onnegotiationneeded = null;
 
-        delete _peer_list[peer_id]; // remove user from user list
+        delete _peer_list[peer_id]; 
     }
 }
 
@@ -101,7 +100,7 @@ function log_user_list()
     }
 }
 
-//---------------[ webrtc ]--------------------    
+
 
 var PC_CONFIG = {
     iceServers: [
@@ -120,7 +119,7 @@ function log_error(e){console.log("[ERROR] ", e);}
 function sendViaServer(data){socket.emit("data", data);}
 
 socket.on("data", (msg)=>{
-    // console.log("Data event invoked with msg type", msg["type"])
+   
     switch(msg["type"])
     {
         case "offer":
@@ -137,7 +136,6 @@ socket.on("data", (msg)=>{
 
 function start_webrtc()
 {
-    // send offer to all other members
     for(let peer_id in _peer_list)
     {
         invite(peer_id);
