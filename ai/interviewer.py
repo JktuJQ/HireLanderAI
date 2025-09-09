@@ -131,7 +131,6 @@ class Interviewer:
 
             # храним историю
             curr_history = "\n" + "вопрос" + "\n" + self.curr_question + "\n" + "ответ" + "\n" + self.curr_answer + "\n"
-            comp_history += curr_history
             self.curr_answer = None
 
             counter = 0
