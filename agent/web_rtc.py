@@ -29,7 +29,6 @@ class AudioEchoTrack(MediaStreamTrack):
     A media stream track that echoes back audio.
     """
     kind = "audio"
-
     def __init__(self, track):
         super().__init__()
         self.track = track
@@ -116,6 +115,37 @@ class AudioEchoTrack(MediaStreamTrack):
         return self.silent_frame
 
 
+class VideoTrack(MediaStreamTrack):
+    """
+    A media stream track that receives user webcam video.
+    """
+    kind = "video"
+    def __init__(self, track):
+        super().__init__()
+        self.track = track
+        print("adding track")
+
+    async def recv(self):
+        print("receive video")
+        frame = await self.track.recv()
+        img = frame.to_ndarray()
+        img = cv2.cvtColor(img, cv2.COLOR_YUV2BGR_I420)
+        cv2.imshow(f"Video stream", img)
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
+        # last_sent_time = 0
+        # send_interval = 5
+
+        # while True:
+        #     frame = await self.track.recv()
+        #     await asyncio.sleep(time.time() - last_sent_time + 1)
+        #     current_time = time.time()
+        #     if current_time - last_sent_time >= send_interval:
+        #         img = frame.to_ndarray()
+        #         img = cv2.cvtColor(img, cv2.COLOR_YUV2RGB_I420)
+        #         proctor.analyze(Image.fromarray(img), None)
+        #         last_sent_time = current_time
+
 class P2PConnection:
     """
     Connection between AI agent and peer.
@@ -145,27 +175,11 @@ class P2PConnection:
         self.connection.on("track", self.__on_track)
 
     async def __on_track(self, track):
-        print(f"Received track: {track}")
+        print(f"Received track: {track}, {track.kind}")
         if track.kind == "video":
-            last_sent_time = 0
-            send_interval = 5
-
-            while True:
-                frame = await track.recv()
-                await asyncio.sleep(time.time() - last_sent_time + 1)
-                current_time = time.time()
-                if current_time - last_sent_time >= send_interval:
-                    img = frame.to_ndarray()
-                    img = cv2.cvtColor(img, cv2.COLOR_YUV2RGB_I420)
-                    proctor.analyze(Image.fromarray(img), None)
-                    last_sent_time = current_time
-
-                # Open video stream window
-                # img = frame.to_ndarray()
-                # img = cv2.cvtColor(img, cv2.COLOR_YUV2BGR_I420)
-                # cv2.imshow(f"Video stream", img)
-                # if cv2.waitKey(1) & 0xFF == ord('q'):
-                #     break
+            video_track = VideoTrack(track)
+            print("adding track")
+            self.connection.addTrack(video_track)
         if track.kind == "audio":
             echo_track = AudioEchoTrack(track)
             self.connection.addTrack(echo_track)
